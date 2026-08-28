@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="description" content="Dream Unity front-page 3D visualization." />
+  <title>Dream Unity</title>
+  <link rel="stylesheet" href="./styles.css?v=20260826-unity-proportion-2" />
+</head>
+<body>
+  <main id="app" aria-label="Dream Unity front-page 3D visualization">
+    <canvas id="world" aria-label="Interactive Dream Unity 3D field"></canvas>
+    <div class="brand"><i></i><span>DREAM UNITY</span></div>
+    <div class="live"><i></i><span>LIVE</span></div>
+
+    <div class="unlock-countdown" id="unlockCountdown" role="timer" aria-live="off" aria-label="Countdown until September 6, 2026 in Israel">
+      <span>UNLOCKED IN</span>
+      <strong id="countdownValue">--D&nbsp;&nbsp;--:--:--</strong>
+      <small>ISRAEL · 6 SEP</small>
+    </div>
+
+    <div class="world-label" id="label-machine" data-world="machine" aria-hidden="true">
+      <span>01</span><strong>DREAM MACHINE</strong>
+    </div>
+    <div class="world-label" id="label-maker" data-world="maker" aria-hidden="true">
+      <span>02</span><strong>DREAM MAKER</strong>
+    </div>
+    <div class="world-label" id="label-reality" data-world="reality" aria-hidden="true">
+      <span>03</span><strong>DREAM WORLD</strong>
+    </div>
+
+    <div class="unity-label" id="unityLabel" aria-hidden="true"><span></span><b>UNITY</b></div>
+    <div class="hint" id="hint">DRAG TO ORBIT · PINCH TO ZOOM</div>
+    <div class="loading" id="loading" aria-hidden="true"><span></span></div>
+  </main>
+
+  <noscript>This experience requires JavaScript.</noscript>
+  <script src="./light-theme.js?v=20260826-front-only-1"></script>
+  <script src="./visual-loader.js?v=20260826-dream-world-spin-1"></script>
+  <script src="./countdown.js?v=20260826-israel-countdown-1"></script>
+</body>
+</html>
