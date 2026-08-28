@@ -514,10 +514,11 @@
     const moved=cancelled||gestureHadPinch||pointerCountBefore>1||gestureTravel>9;
     if(moved)return;
 
-    // Portals are intentionally inert in this repository. A click/tap never opens
-    // a world, sub-portal, game, or any downstream content.
     const hit=hitTest(event.clientX,event.clientY);
-    if(hit)return;
+    if(hit) {
+      window.location.assign(`./journal.html?world=${encodeURIComponent(hit)}`);
+      return;
+    }
 
     const now=performance.now();
     if(now-lastTapAt<330) {

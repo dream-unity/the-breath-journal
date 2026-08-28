@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f7fb" />
+  <meta name="description" content="A private, device-local Dream Unity video journal." />
+  <title>Video Journal · Dream Unity</title>
+  <link rel="stylesheet" href="./journal.css?v=20260828-video-journals-1" />
+</head>
+<body data-world="machine">
+  <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <header class="site-header">
+    <a class="back-link" href="./index.html" aria-label="Return to Dream Unity">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+      <span>RETURN TO UNITY</span>
+    </a>
+    <div class="brand-mark"><i></i><span>DREAM UNITY</span></div>
+    <div class="local-mark"><i></i><span>PRIVATE · THIS DEVICE</span></div>
+  </header>
+
+  <main class="journal-shell">
+    <section class="world-heading" aria-labelledby="worldTitle">
+      <div class="world-orbit" aria-hidden="true"><i></i><i></i><span></span></div>
+      <p class="eyebrow"><span id="worldNumber">01</span> · VIDEO JOURNAL</p>
+      <h1 id="worldTitle">Dream Machine</h1>
+      <p id="worldPrompt">Record what you perceive before interpretation takes hold.</p>
+    </section>
+
+    <section class="recorder-card" aria-labelledby="recorderTitle">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">NEW ENTRY</p>
+          <h2 id="recorderTitle">Record this moment</h2>
+        </div>
+        <div class="privacy-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+          Saved only in this browser
+        </div>
+      </div>
+
+      <div class="camera-stage" id="cameraStage">
+        <video id="cameraPreview" autoplay muted playsinline aria-label="Live camera preview"></video>
+        <div class="camera-idle" id="cameraIdle">
+          <div class="camera-glyph" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14.5 6H5.8A2.8 2.8 0 0 0 3 8.8v6.4A2.8 2.8 0 0 0 5.8 18h8.7a2.5 2.5 0 0 0 2.5-2.5v-7A2.5 2.5 0 0 0 14.5 6Z" /><path d="m17 10 4-2v8l-4-2" /></svg>
+          </div>
+          <strong>Your camera is off</strong>
+          <span>Nothing begins until you choose to turn it on.</span>
+        </div>
+        <div class="recording-state" id="recordingState" hidden>
+          <i></i><span>RECORDING</span><b id="recordingTime">00:00</b>
+        </div>
+      </div>
+
+      <div class="recorder-controls">
+        <button class="button primary" id="openCamera" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6H5.8A2.8 2.8 0 0 0 3 8.8v6.4A2.8 2.8 0 0 0 5.8 18h8.7a2.5 2.5 0 0 0 2.5-2.5v-7A2.5 2.5 0 0 0 14.5 6Z" /><path d="m17 10 4-2v8l-4-2" /></svg>
+          Turn on camera
+        </button>
+        <button class="button record" id="startRecording" type="button" hidden><i></i>Start recording</button>
+        <button class="button stop" id="stopRecording" type="button" hidden><span></span>Finish &amp; save</button>
+        <button class="button quiet" id="closeCamera" type="button" hidden>Turn camera off</button>
+      </div>
+      <p class="status-line" id="cameraStatus" role="status" aria-live="polite">Camera and microphone permission will be requested when you begin.</p>
+    </section>
+
+    <section class="entries-section" aria-labelledby="entriesTitle">
+      <div class="entries-heading">
+        <div>
+          <p class="section-kicker">ARCHIVE</p>
+          <h2 id="entriesTitle">Your video journal</h2>
+        </div>
+        <span class="entry-count" id="entryCount">0 ENTRIES</span>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <span>NO ENTRIES YET</span>
+        <p>Your recordings and optional written reflections will appear here.</p>
+      </div>
+      <div class="entries-grid" id="entriesGrid"></div>
+    </section>
+  </main>
+
+  <template id="entryTemplate">
+    <article class="journal-entry">
+      <header class="entry-meta">
+        <div><span class="entry-date"></span><time class="entry-time"></time></div>
+        <span class="entry-duration"></span>
+      </header>
+      <video class="entry-video" controls playsinline preload="metadata"></video>
+      <div class="entry-note">
+        <label>Written reflection <span>OPTIONAL</span></label>
+        <textarea rows="5" maxlength="12000" placeholder="What did you notice, understand or decide in this entry?"></textarea>
+        <div class="note-footer">
+          <span class="note-status" role="status">Saved with this entry</span>
+          <button class="delete-entry" type="button">Delete entry</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <script src="./journal.js?v=20260828-video-journals-1"></script>
+</body>
+</html>
