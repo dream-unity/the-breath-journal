@@ -6,7 +6,8 @@
   <meta name="theme-color" content="#f5f7fb" />
   <meta name="description" content="A private, device-local Dream Unity video journal." />
   <title>Video Journal · Dream Unity</title>
-  <link rel="stylesheet" href="./journal.css?v=20260828-video-journals-1" />
+  <link rel="stylesheet" href="./journal.css?v=20260918-mind-maps-1" />
+  <link rel="stylesheet" href="./mindmap.css?v=20260918-mind-maps-1" />
 </head>
 <body data-world="machine">
   <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -21,11 +22,71 @@
   </header>
 
   <main class="journal-shell">
+    <nav class="portal-nav" aria-label="Journals">
+      <a href="./journal.html?world=machine" data-portal="machine">Video Journal</a>
+      <a href="./journal.html?world=maker" data-portal="maker">Mind-Mapping Videos</a>
+      <a href="./journal.html?world=reality" data-portal="reality">World Perspectives</a>
+    </nav>
     <section class="world-heading" aria-labelledby="worldTitle">
       <div class="world-orbit" aria-hidden="true"><i></i><i></i><span></span></div>
       <p class="eyebrow"><span id="worldNumber">01</span> · VIDEO JOURNAL</p>
-      <h1 id="worldTitle">Dream Machine</h1>
+      <h1 id="worldTitle">Video Journal</h1>
       <p id="worldPrompt">Record what you perceive before interpretation takes hold.</p>
+    </section>
+
+    <section id="mindMapWorkspace" class="map-workspace" aria-label="Mind maps" hidden>
+      <div class="map-library">
+        <div class="map-library-field"><label for="savedMaps">Your saved mind maps</label><select id="savedMaps"><option value="">Loading maps…</option></select></div>
+        <button id="newMap" class="map-primary" type="button">New map</button>
+        <button id="importMap" type="button">Import backup</button>
+        <input id="mapFile" type="file" accept=".json,application/json" hidden />
+      </div>
+      <p class="map-storage-note">Maps save automatically in this browser on this device. Export backups to keep a copy or move them to another device.</p>
+      <p id="mapMessage" class="map-message" role="alert" hidden></p>
+      <div id="mapEmpty" class="map-empty"><h2>Make room for connections.</h2><p>Create a mind map, add a YouTube link, and connect the ideas as you watch.</p></div>
+      <div id="mapEditor" hidden>
+        <div class="map-title-row">
+          <div class="map-title-field"><label for="mapTitle">Map title</label><input id="mapTitle" maxlength="160" autocomplete="off" /></div>
+          <span id="mapSaveStatus" class="map-save-status" role="status" aria-live="polite"></span>
+          <button id="saveMap" type="button">Save now</button>
+          <button id="exportMap" type="button">Export map</button>
+          <button id="deleteMap" class="map-danger" type="button">Delete map</button>
+        </div>
+        <div class="map-columns">
+          <aside id="videoDropZone" class="map-video-panel" aria-label="Video for this mind map">
+            <h3>Watch &amp; connect</h3>
+            <form id="youtubeForm" novalidate>
+              <label for="youtubeUrl">YouTube video link</label>
+              <input id="youtubeUrl" type="text" inputmode="url" placeholder="Paste or drop a YouTube link" autocomplete="off" aria-describedby="youtubeHelp youtubeStatus" />
+              <button class="map-primary" type="submit">Load video</button>
+            </form>
+            <p id="youtubeHelp" class="map-help">Paste a link or drag one into this panel. It stays with this map.</p>
+            <p id="youtubeStatus" class="map-help" role="status" aria-live="polite"></p>
+            <div id="videoStage" class="map-video-stage"><div class="map-video-placeholder">Your video appears here.<br />You can also map without a video.</div></div>
+            <div id="videoActions" class="map-video-actions" hidden><a id="openYoutube" target="_blank" rel="noopener noreferrer">Open on YouTube ↗</a><button id="removeVideo" type="button">Remove link</button></div>
+            <p class="map-help">YouTube playback needs an internet connection and connects to YouTube. If a video cannot play here, open it on YouTube.</p>
+          </aside>
+          <div class="map-editor-panel">
+            <div class="map-tools" role="group" aria-label="Mind map tools">
+              <button id="addChild" class="map-primary" type="button">Add branch</button>
+              <button id="addSibling" type="button">Add sibling</button>
+              <button id="removeNode" class="map-danger" type="button">Delete branch</button>
+              <button id="arrangeMap" type="button">Arrange</button>
+              <button id="zoomOut" type="button" aria-label="Zoom out">−</button><span id="mapZoom" class="map-zoom-label">100%</span><button id="zoomIn" type="button" aria-label="Zoom in">+</button>
+              <button id="fitMap" type="button">Fit map</button>
+            </div>
+            <div id="mapViewport" class="map-canvas-viewport" tabindex="0" role="region" aria-label="Mind map canvas. Scroll to explore; select an idea to edit it.">
+              <div id="mapSpace" class="map-canvas-space"><div id="mapCanvas" class="map-canvas"><svg id="mapConnections" class="map-connections" aria-hidden="true"></svg><div id="mapNodes"></div></div></div>
+            </div>
+            <div class="map-inspector">
+              <div><label for="nodeLabel">Selected idea</label><input id="nodeLabel" maxlength="200" autocomplete="off" /></div>
+              <div><label for="nodeParent">Connect to</label><select id="nodeParent"></select></div>
+              <div class="map-notes-field"><label for="nodeNotes">Notes for this idea</label><textarea id="nodeNotes" rows="3" maxlength="12000" placeholder="Capture a thought, connection or video timestamp…"></textarea></div>
+            </div>
+            <p class="map-instructions">Select an idea to edit it. Drag ideas to move them, or focus an idea and use Alt + arrow keys. Add branches to connect ideas.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="recorder-card" aria-labelledby="recorderTitle">
@@ -102,6 +163,7 @@
   </template>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-  <script src="./journal.js?v=20260828-video-journals-1"></script>
+  <script src="./journal.js?v=20260918-mind-maps-1"></script>
+  <script type="module" src="./mindmap.js?v=20260918-mind-maps-1"></script>
 </body>
 </html>

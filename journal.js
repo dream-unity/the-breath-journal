@@ -4,17 +4,17 @@
   const WORLDS = {
     machine: {
       number: '01',
-      title: 'Dream Machine',
+      title: 'Video Journal',
       prompt: 'Record what you perceive before interpretation takes hold.'
     },
     maker: {
       number: '02',
-      title: 'Dream Maker',
-      prompt: 'Give form to the experience, idea or possibility moving through you.'
+      title: 'Mind-Mapping Videos',
+      prompt: 'Watch a video. Connect its ideas. Keep your perspective.'
     },
     reality: {
       number: '03',
-      title: 'Dream World',
+      title: 'World Perspectives',
       prompt: 'Record what you are choosing to carry from imagination into reality.'
     }
   };
@@ -44,7 +44,18 @@
   document.getElementById('worldNumber').textContent = world.number;
   document.getElementById('worldTitle').textContent = world.title;
   document.getElementById('worldPrompt').textContent = world.prompt;
-  document.title = `${world.title} Video Journal · Dream Unity`;
+  document.title = `${world.title} · Dream Unity`;
+
+  document.querySelector(`[data-portal="${worldKey}"]`)?.setAttribute('aria-current', 'page');
+  if (worldKey === 'maker') {
+    document.querySelector('.eyebrow').textContent = '02 · WATCH, CONNECT, REFLECT';
+    const recordings = document.createElement('details');
+    recordings.className = 'local-recordings';
+    const summary = document.createElement('summary');
+    summary.textContent = 'Record or revisit your local videos';
+    recordings.append(summary, document.querySelector('.recorder-card'), document.querySelector('.entries-section'));
+    document.querySelector('.journal-shell').append(recordings);
+  }
 
   const DB_NAME = 'dream-unity-video-journal';
   const DB_VERSION = 1;

@@ -26,9 +26,9 @@
   const rgba = (rgb, alpha) => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
 
   const WORLD = {
-    machine: { index: '01', name: 'DREAM MACHINE', css: '#009DFF', rgb: [0,157,255] },
-    maker: { index: '02', name: 'DREAM MAKER', css: '#00C97A', rgb: [0,201,122] },
-    reality: { index: '03', name: 'DREAM WORLD', css: '#7A36F5', rgb: [122,54,245] }
+    machine: { index: '01', name: 'VIDEO JOURNAL', css: '#009DFF', rgb: [0,157,255] },
+    maker: { index: '02', name: 'MIND-MAPPING VIDEOS', css: '#00C97A', rgb: [0,201,122] },
+    reality: { index: '03', name: 'WORLD PERSPECTIVES', css: '#7A36F5', rgb: [122,54,245] }
   };
   const WHITE_ALT = {
     machine:[0,92,235],
@@ -382,7 +382,8 @@
       const element=labels[key];
       const point=worldScreen[key];
       if (!element) return;
-      element.style.left=`${point.x}px`;
+      const halfWidth=element.offsetWidth/2+8;
+      element.style.left=`${clamp(point.x,halfWidth,width-halfWidth)}px`;
       element.style.top=`${point.y-point.r*1.65}px`;
       element.classList.toggle('hovered',hoverWorld===key);
     });

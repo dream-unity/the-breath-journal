@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const sourceUrl = './visual.js?v=20260828-video-journals-1';
+  const sourceUrl = './visual.js?v=20260918-mind-maps-1';
   const loading = document.getElementById('loading');
 
   async function loadSource(cache) {
