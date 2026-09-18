@@ -132,6 +132,8 @@ export function validateMap(input) {
       id: nodeId,
       label: text(node.label, 'Each idea label', 200, true).trim() || 'Untitled idea',
       notes: text(node.notes ?? '', 'Idea notes', 12_000, true),
+      // Older maps have no branch video; rebuild supplied player URLs from the watch link.
+      video: node.video == null ? null : parseYouTubeUrl(object(node.video, 'The idea video').url),
       parentId,
       x: node.x,
       y: node.y,
@@ -171,7 +173,7 @@ export function createMap(title = 'Untitled mind map') {
     createdAt: now,
     updatedAt: now,
     video: null,
-    nodes: [{ id: newId(), label: 'Main idea', notes: '', parentId: null, x: 80, y: 220 }],
+    nodes: [{ id: newId(), label: 'Main idea', notes: '', video: null, parentId: null, x: 80, y: 220 }],
   });
 }
 

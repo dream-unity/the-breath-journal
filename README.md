@@ -20,6 +20,8 @@ Choose **New map**, name it, and select an idea to edit its text and notes. **Ad
 
 Paste or drag a YouTube video link into the video panel. Standard watch, Share, Shorts, Live and embed links are supported, including start timestamps. The video link is saved with its map. Playback needs internet access and connects to YouTube; unavailable or embed-restricted videos can be opened using **Open on YouTube**.
 
+Every idea can also have its own video. Select a branch and use **Video for this idea**, directly below its notes, to paste, drop or enter a YouTube link. **Has video** marks linked branches. Selecting one shows its video in the centred player at the top; **Watch video** takes you to that player. **Watch map video** returns to the map's main video. Regular (the default), Large and Very large sizes apply to both map and branch playback. Branch links are saved automatically and included in exported backups; older maps still load normally.
+
 Maps save automatically in IndexedDB in the same browser profile and device. They are **not cloud-synced**. Clearing site data or using a temporary/private browser session may remove them. Use **Export map** for a JSON backup and **Import backup** to restore or transfer a map. Import creates a separate copy, never overwriting an existing map. Storage failures are shown explicitly; save status changes to saved only after the database transaction commits.
 
 Existing video recordings and reflections remain in the unchanged `dream-unity-video-journal` database, with their original `machine`, `maker` and `reality` identifiers. The maker portal's local recordings are accessible in **Record or revisit your local videos**. Mind maps use the separate `dream-unity-mind-maps` database.

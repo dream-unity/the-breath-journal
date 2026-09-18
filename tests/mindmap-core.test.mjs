@@ -65,8 +65,8 @@ test('YouTube parser rejects spoofed hosts, active URLs, credentials, and invali
 function branchedMap() {
   const map = core.createMap('A video worth understanding');
   map.nodes.push(
-    { id: 'child-a', label: 'Claim', notes: 'Test the evidence.', parentId: map.nodes[0].id, x: 400, y: 120 },
-    { id: 'child-b', label: 'Evidence', notes: '', parentId: 'child-a', x: 700, y: 120 },
+    { id: 'child-a', label: 'Claim', notes: 'Test the evidence.', video: null, parentId: map.nodes[0].id, x: 400, y: 120 },
+    { id: 'child-b', label: 'Evidence', notes: '', video: null, parentId: 'child-a', x: 700, y: 120 },
   );
   return map;
 }
@@ -161,6 +161,72 @@ test('export/import preserves content while always creating a fresh saved-map id
   assert.equal(first.title, original.title);
   for (const value of ['bad json', '{}', '{"version":2}', 'null', 'x'.repeat(8_000_001)]) {
     assert.throws(() => core.importMap(value), Error);
+  }
+});
+
+test('each idea keeps its own video and timestamp through export and import', () => {
+  const original = branchedMap();
+  original.video = core.parseYouTubeUrl(`https://youtu.be/${videoId}?t=3m`);
+  original.nodes[0].video = core.parseYouTubeUrl(`https://youtu.be/${videoId}?t=12s`);
+  original.nodes[1].video = core.parseYouTubeUrl('https://www.youtube.com/watch?v=M7lc1UVf-VE&t=1m30s');
+  original.nodes[2].video = core.parseYouTubeUrl(`https://youtu.be/${videoId}?t=2m`);
+  const imported = core.importMap(core.serializeMap(original));
+  assert.deepEqual(imported.nodes, original.nodes);
+  assert.deepEqual(imported.video, original.video);
+
+  imported.nodes[1].video = null;
+  imported.nodes[2].video.startSeconds = 500;
+  assert.equal(original.nodes[1].video.videoId, 'M7lc1UVf-VE');
+  assert.equal(original.nodes[2].video.startSeconds, 120);
+  assert.equal(imported.nodes[0].video.startSeconds, 12);
+  assert.equal(imported.video.startSeconds, 180);
+  const reimported = core.importMap(core.serializeMap(imported));
+  assert.equal(reimported.nodes[1].video, null);
+  assert.equal(reimported.nodes[2].video.startSeconds, 120, 'the trusted URL determines the timestamp');
+});
+
+test('legacy maps without idea videos load and import with existing map video intact', () => {
+  const legacy = branchedMap();
+  legacy.video = core.parseYouTubeUrl(`https://youtu.be/${videoId}?t=3m`);
+  legacy.nodes.forEach((node) => { delete node.video; });
+  const validated = core.validateMap(legacy);
+  const imported = core.importMap(JSON.stringify({ version: 1, map: legacy }));
+  for (const map of [validated, imported]) {
+    assert.deepEqual(map.nodes.map((node) => node.video), [null, null, null]);
+    assert.deepEqual(map.video, legacy.video);
+    assert.equal(map.nodes[1].notes, 'Test the evidence.');
+    assert.equal(map.nodes[2].parentId, 'child-a');
+  }
+  assert.equal('video' in legacy.nodes[0], false, 'normalizing must not mutate the legacy record');
+});
+
+test('idea videos rebuild safe player URLs and reject malformed or malicious links', () => {
+  const map = branchedMap();
+  map.nodes[1].video = {
+    url: 'https://youtu.be/M7lc1UVf-VE?t=1m30s',
+    videoId: '<script>alert(1)</script>',
+    embedUrl: 'javascript:alert(1)',
+    startSeconds: -1,
+    unsupported: '<iframe src="https://evil.test"></iframe>',
+  };
+  const valid = core.validateMap(map);
+  assert.deepEqual(valid.nodes[1].video, core.parseYouTubeUrl('https://youtu.be/M7lc1UVf-VE?t=90s'));
+  assert.equal(valid.nodes[0].video, null);
+  assert.equal(valid.nodes[2].video, null);
+  assert.equal(valid.video, null);
+
+  for (const invalid of [
+    `https://youtu.be/${videoId}`, [], false, 3, {}, { url: null },
+    { url: 'javascript:alert(1)' },
+    { url: `https://youtube.com.evil.test/watch?v=${videoId}` },
+    { url: `https://evil.test@youtube.com/watch?v=${videoId}` },
+    { url: `https://youtu.be/${videoId}?t=-1` },
+    { url: 'https://youtu.be/short' },
+  ]) {
+    map.nodes[1].video = invalid;
+    assert.throws(() => core.validateMap(map), Error);
+    assert.throws(() => core.serializeMap(map), Error);
+    assert.throws(() => core.importMap(JSON.stringify({ version: 1, map })), Error);
   }
 });
 
@@ -261,6 +327,46 @@ test('listing sorts saved maps, deletion commits, and version changes reopen the
   assert.equal(deleted, false);
   harness.transactions[1].oncomplete();
   await deletion;
+});
+
+test('saving and listing preserve independent idea videos and normalize legacy records', async (t) => {
+  const harness = installDatabaseHarness(t);
+  const isolated = await loadCore();
+  const map = branchedMap();
+  map.video = isolated.parseYouTubeUrl(`https://youtu.be/${videoId}?t=3m`);
+  map.nodes[1].video = isolated.parseYouTubeUrl('https://youtu.be/M7lc1UVf-VE?t=45s');
+  map.nodes[2].video = isolated.parseYouTubeUrl(`https://youtu.be/${videoId}?t=90s`);
+  const pendingSave = isolated.saveMap(map);
+  await turn();
+  const write = harness.transactions[0];
+  assert.deepEqual(write.writtenMap.nodes, map.nodes);
+  assert.notEqual(write.writtenMap.nodes[1].video, map.nodes[1].video);
+  write.request.result = map.id;
+  write.request.onsuccess();
+  write.oncomplete();
+  const saved = await pendingSave;
+  assert.deepEqual(saved.nodes, map.nodes);
+  assert.deepEqual(saved.video, map.video);
+
+  const legacy = isolated.createMap('Legacy');
+  legacy.video = isolated.parseYouTubeUrl(`https://youtu.be/${videoId}?t=1m`);
+  delete legacy.nodes[0].video;
+  const pendingList = isolated.listMaps();
+  await turn();
+  const read = harness.transactions[1];
+  read.request.result = [write.writtenMap, legacy];
+  read.request.onsuccess();
+  read.oncomplete();
+  const maps = await pendingList;
+  const restored = maps.find((entry) => entry.id === map.id);
+  assert.deepEqual(restored.nodes, map.nodes);
+  assert.deepEqual(restored.video, map.video);
+  assert.equal(maps.find((entry) => entry.id === legacy.id).nodes[0].video, null);
+  assert.deepEqual(maps.find((entry) => entry.id === legacy.id).video, legacy.video);
+
+  map.nodes[1].video = { url: 'javascript:alert(1)' };
+  await assert.rejects(isolated.saveMap(map), Error);
+  assert.equal(harness.transactions.length, 2, 'malformed videos must not reach storage');
 });
 
 test('unavailable browser storage rejects without pretending the map was saved', async (t) => {

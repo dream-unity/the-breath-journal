@@ -1,11 +1,12 @@
-import { createMap, listMaps, saveMap, deleteMap, parseYouTubeUrl, serializeMap, importMap } from './mindmap-core.js?v=20260918-mind-maps-1';
+import { createMap, listMaps, saveMap, deleteMap, parseYouTubeUrl, serializeMap, importMap } from './mindmap-core.js?v=20260918-branch-videos-3';
 
 if (new URLSearchParams(location.search).get('world') === 'maker') initMindMaps();
 
 function initMindMaps() {
   const $ = id => document.getElementById(id);
-  const el = Object.fromEntries(['mindMapWorkspace','savedMaps','newMap','importMap','mapFile','mapMessage','mapEmpty','mapEditor','mapTitle','mapSaveStatus','saveMap','exportMap','deleteMap','youtubeForm','youtubeUrl','youtubeStatus','videoDropZone','videoSize','videoStage','videoActions','openYoutube','removeVideo','addChild','addSibling','removeNode','arrangeMap','zoomOut','zoomIn','fitMap','mapZoom','mapViewport','mapSpace','mapCanvas','mapConnections','mapNodes','nodeLabel','nodeNotes','nodeParent'].map(id => [id, $(id)]));
+  const el = Object.fromEntries(['mindMapWorkspace','savedMaps','newMap','importMap','mapFile','mapMessage','mapEmpty','mapEditor','mapTitle','mapSaveStatus','saveMap','exportMap','deleteMap','youtubeForm','youtubeUrl','youtubeStatus','videoDropZone','videoSize','videoStage','videoContext','videoActions','openYoutube','removeVideo','showMapVideo','addChild','addSibling','removeNode','arrangeMap','zoomOut','zoomIn','fitMap','mapZoom','mapViewport','mapSpace','mapCanvas','mapConnections','mapNodes','nodeLabel','nodeNotes','nodeParent','nodeVideoPanel','nodeYoutubeForm','nodeYoutubeUrl','nodeYoutubeStatus','nodeVideoActions','watchNodeVideo','openNodeYoutube','removeNodeVideo'].map(id => [id, $(id)]));
   let current = null, selectedId = null, maps = [], revision = 0, savedRevision = 0;
+  let playingNodeId = null;
   let saveTimer = 0, queue = Promise.resolve(), busy = false, scale = 1, boardWidth = 720, boardHeight = 440;
   const uid = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const selected = () => current?.nodes.find(node => node.id === selectedId);
@@ -73,6 +74,9 @@ function initMindMaps() {
   }
 
   function openMap(map) {
+    // Stop the previous map's playback even if the next map links the same video.
+    el.videoStage.replaceChildren();
+    playingNodeId = null;
     current = map ? structuredClone(map) : null;
     revision = savedRevision = 0;
     selectedId = current?.nodes.find(node => node.parentId === null)?.id;
@@ -80,12 +84,12 @@ function initMindMaps() {
     el.mapEditor.hidden = !current;
     el.videoDropZone.hidden = !current;
     refreshLibrary();
-    if (!current) { el.videoStage.replaceChildren(); return; }
+    if (!current) return;
     el.mapTitle.value = current.title;
     el.mapSaveStatus.textContent = 'Saved in this browser';
     el.youtubeUrl.value = current.video?.url || '';
+    el.youtubeUrl.removeAttribute('aria-invalid');
     el.youtubeStatus.textContent = '';
-    renderVideo();
     scale = 1;
     renderMap();
     renderInspector();
@@ -116,6 +120,9 @@ function initMindMaps() {
       for (const parent of current.nodes) if (!excluded.has(parent.id)) el.nodeParent.add(new Option(parent.label || 'Untitled idea', parent.id));
       el.nodeParent.value = node.parentId;
     }
+    renderNodeVideo();
+    playingNodeId = node.video ? node.id : null;
+    renderVideo();
   }
 
   function selectNode(id) {
@@ -164,8 +171,9 @@ function initMindMaps() {
   function nodeText(button, node) {
     button.replaceChildren();
     const label = document.createElement('span'); label.className = 'map-node-label'; label.textContent = node.label || 'Untitled idea'; button.append(label);
-    if (node.notes) { const note = document.createElement('small'); note.textContent = 'Has notes'; button.append(note); }
-    button.setAttribute('aria-label', `${node.label || 'Untitled idea'}${node.notes ? ', has notes' : ''}`);
+    const details = [node.notes ? 'Has notes' : '', node.video ? 'Has video' : ''].filter(Boolean);
+    if (details.length) { const note = document.createElement('small'); note.textContent = details.join(' · '); button.append(note); }
+    button.setAttribute('aria-label', `${node.label || 'Untitled idea'}${details.length ? `, ${details.join(', ').toLowerCase()}` : ''}`);
     button.title = node.label;
   }
 
@@ -220,7 +228,7 @@ function initMindMaps() {
     const parent = sibling ? current.nodes.find(node => node.id === selected().parentId) : selected();
     if (!parent) return;
     const siblings = current.nodes.filter(node => node.parentId === parent.id);
-    const node = {id:uid(),parentId:parent.id,label:'New idea',notes:'',x:Math.min(10000,parent.x+230),y:Math.min(10000,parent.y+siblings.length*110)};
+    const node = {id:uid(),parentId:parent.id,label:'New idea',notes:'',video:null,x:Math.min(10000,parent.x+230),y:Math.min(10000,parent.y+siblings.length*110)};
     current.nodes.push(node); selectedId = node.id;
     renderMap(); renderInspector(); changed();
     const button = [...el.mapNodes.children].find(item => item.dataset.id === node.id);
@@ -246,22 +254,76 @@ function initMindMaps() {
   }
 
   function renderVideo() {
+    const node = current?.nodes.find(item => item.id === playingNodeId);
+    if (!node?.video) playingNodeId = null;
+    const video = playingNodeId ? node.video : current?.video;
+    const context = playingNodeId ? `Video for idea: ${node.label || 'Untitled idea'}` : 'Map video';
+    el.videoContext.textContent = context;
+    el.videoActions.hidden = !video;
+    el.showMapVideo.hidden = !playingNodeId || !current?.video;
+    el.removeVideo.textContent = playingNodeId ? 'Remove this branch video' : 'Remove map video';
+    if (video) el.openYoutube.href = video.url; else el.openYoutube.removeAttribute('href');
+    const mounted = el.videoStage.querySelector('iframe');
+    // Selection fires on pointerdown and click; never restart an unchanged video.
+    if (video && mounted?.getAttribute('src') === video.embedUrl) { mounted.title = context; return; }
+    if (!video && el.videoStage.querySelector('.map-video-placeholder')) return;
     el.videoStage.replaceChildren();
-    el.videoActions.hidden = !current.video;
-    if (!current.video) {
+    if (!video) {
       const placeholder = document.createElement('div'); placeholder.className='map-video-placeholder'; placeholder.textContent='Your video appears here. You can also map without a video.'; el.videoStage.append(placeholder); return;
     }
-    const iframe = document.createElement('iframe'); iframe.title='YouTube video for this mind map';
-    iframe.src=current.video.embedUrl; iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    const iframe = document.createElement('iframe'); iframe.title=context;
+    iframe.src=video.embedUrl; iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
     iframe.allowFullscreen=true; iframe.referrerPolicy='strict-origin-when-cross-origin';
-    el.videoStage.append(iframe); el.openYoutube.href=current.video.url;
+    el.videoStage.append(iframe);
+  }
+
+  function renderNodeVideo(status = '') {
+    const node = selected();
+    el.nodeYoutubeUrl.value = node?.video?.url || '';
+    el.nodeYoutubeUrl.removeAttribute('aria-invalid');
+    el.nodeYoutubeStatus.textContent = status;
+    el.nodeVideoActions.hidden = !node?.video;
+    if (node?.video) el.openNodeYoutube.href = node.video.url;
+    else el.openNodeYoutube.removeAttribute('href');
+  }
+
+  function refreshNodeBadge(node) {
+    const button = [...el.mapNodes.children].find(item => item.dataset.id === node.id);
+    if (button) nodeText(button, node);
+  }
+
+  function loadNodeVideo(value) {
+    const node = selected();
+    if (!node) return;
+    try {
+      const video = parseYouTubeUrl(value);
+      if (node.video?.url !== video.url) { node.video = video; refreshNodeBadge(node); changed(); }
+      playingNodeId = node.id;
+      renderNodeVideo('Video linked to this idea. Choose Watch video to go to the player.');
+      renderVideo();
+    } catch (error) {
+      el.nodeYoutubeUrl.setAttribute('aria-invalid', 'true');
+      el.nodeYoutubeStatus.textContent = `${error.message}${node.video ? ' The existing video is unchanged.' : ''}`;
+    }
+  }
+
+  function removeBranchVideo(node) {
+    if (!node?.video) return;
+    node.video = null;
+    if (playingNodeId === node.id) playingNodeId = null;
+    refreshNodeBadge(node);
+    if (selectedId === node.id) renderNodeVideo('Video removed from this idea.');
+    renderVideo();
+    changed();
   }
 
   function loadVideo(value) {
     if (!current) return;
     try {
       const video = parseYouTubeUrl(value);
-      if (current.video?.url !== video.url) { current.video=video; renderVideo(); changed(); }
+      if (current.video?.url !== video.url) { current.video=video; changed(); }
+      playingNodeId = null;
+      renderVideo();
       el.youtubeUrl.value=video.url; el.youtubeUrl.removeAttribute('aria-invalid');
       el.youtubeStatus.textContent='Video linked. Press play in the player.';
     } catch (error) { el.youtubeUrl.setAttribute('aria-invalid','true'); el.youtubeStatus.textContent=error.message; }
@@ -271,7 +333,7 @@ function initMindMaps() {
   el.savedMaps.addEventListener('change', () => { const id=el.savedMaps.value; withSavedMap(() => openMap(maps.find(map => map.id===id))); });
   el.mapTitle.addEventListener('input', () => { current.title=el.mapTitle.value; changed(); });
   el.saveMap.addEventListener('click', () => persist().then(()=>message('')).catch(report));
-  el.nodeLabel.addEventListener('input', () => { const node=selected(); node.label=el.nodeLabel.value; const button=[...el.mapNodes.children].find(item=>item.dataset.id===node.id); nodeText(button,node); changed(); });
+  el.nodeLabel.addEventListener('input', () => { const node=selected(); node.label=el.nodeLabel.value; const button=[...el.mapNodes.children].find(item=>item.dataset.id===node.id); nodeText(button,node); if(playingNodeId===node.id)renderVideo(); changed(); });
   el.nodeNotes.addEventListener('input', () => { const node=selected(); node.notes=el.nodeNotes.value; const button=[...el.mapNodes.children].find(item=>item.dataset.id===node.id); nodeText(button,node); changed(); });
   el.nodeParent.addEventListener('change', () => { const node=selected(), id=el.nodeParent.value; if(node.parentId===null||descendants(node.id).has(id)||!current.nodes.some(item=>item.id===id))return; node.parentId=id; renderMap(); changed(); });
   el.addChild.addEventListener('click',()=>addBranch()); el.addSibling.addEventListener('click',()=>addBranch(true));
@@ -280,10 +342,31 @@ function initMindMaps() {
   el.zoomOut.addEventListener('click',()=>{scale=Math.max(.08,scale/1.25);applyZoom();});
   el.zoomIn.addEventListener('click',()=>{scale=Math.min(1.75,scale*1.25);applyZoom();}); el.fitMap.addEventListener('click',fitMap);
   el.youtubeForm.addEventListener('submit',event=>{event.preventDefault();loadVideo(el.youtubeUrl.value);});
-  el.youtubeUrl.addEventListener('paste',event=>{const text=event.clipboardData?.getData('text/plain');if(text){event.preventDefault();loadVideo(text);}});
-  el.videoDropZone.addEventListener('dragover',event=>{if([...event.dataTransfer.types].some(type=>['text/plain','text/uri-list'].includes(type))){event.preventDefault();event.dataTransfer.dropEffect='copy';}});
-  el.videoDropZone.addEventListener('drop',event=>{event.preventDefault();const uri=event.dataTransfer.getData('text/uri-list').split(/\r?\n/).find(line=>line&&!line.startsWith('#'));loadVideo(uri||event.dataTransfer.getData('text/plain'));});
-  el.removeVideo.addEventListener('click',()=>{current.video=null;el.youtubeUrl.value='';el.youtubeStatus.textContent='Video link removed.';renderVideo();changed();});
+  function bindVideoInput(input, panel, load) {
+    input.addEventListener('paste', event => { const text=event.clipboardData?.getData('text/plain'); if(text){event.preventDefault();input.value=text;load(text);} });
+    panel.addEventListener('dragover', event => { if([...event.dataTransfer.types].some(type=>['text/plain','text/uri-list'].includes(type))){event.preventDefault();event.dataTransfer.dropEffect='copy';} });
+    panel.addEventListener('drop', event => {
+      event.preventDefault();
+      const uri=event.dataTransfer.getData('text/uri-list').split(/\r?\n/).find(line=>line&&!line.startsWith('#'));
+      const value=uri||event.dataTransfer.getData('text/plain');
+      input.value=value;load(value);
+    });
+  }
+  bindVideoInput(el.youtubeUrl, el.videoDropZone, loadVideo);
+  bindVideoInput(el.nodeYoutubeUrl, el.nodeVideoPanel, loadNodeVideo);
+  el.nodeYoutubeForm.addEventListener('submit',event=>{event.preventDefault();loadNodeVideo(el.nodeYoutubeUrl.value);});
+  el.watchNodeVideo.addEventListener('click',()=>{
+    if(!selected()?.video)return;
+    playingNodeId=selectedId;renderVideo();
+    el.videoStage.focus({preventScroll:true});
+    el.videoDropZone.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  });
+  el.removeNodeVideo.addEventListener('click',()=>removeBranchVideo(selected()));
+  el.showMapVideo.addEventListener('click',()=>{playingNodeId=null;renderVideo();});
+  el.removeVideo.addEventListener('click',()=>{
+    if(playingNodeId){removeBranchVideo(current.nodes.find(node=>node.id===playingNodeId));return;}
+    current.video=null;el.youtubeUrl.value='';el.youtubeUrl.removeAttribute('aria-invalid');el.youtubeStatus.textContent='Map video removed.';renderVideo();changed();
+  });
   el.deleteMap.addEventListener('click',()=>{if(!confirm(`Delete “${current.title || 'Untitled mind map'}” from this browser? Export a backup first if you want to keep it.`))return;withSavedMap(async()=>{const id=current.id;await deleteMap(id);maps=maps.filter(map=>map.id!==id);openMap(maps[0]||null);},false);});
   el.exportMap.addEventListener('click',()=>{
     try { const blob=new Blob([serializeMap(current)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${(current.title||'mind-map').replace(/[^\p{L}\p{N}_-]+/gu,'-').slice(0,80)||'mind-map'}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000); }
