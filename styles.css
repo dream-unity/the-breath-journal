@@ -6,8 +6,11 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; min-width: 280px; min-height: 100%; }
-/* Paper colours sampled from the original artwork's left and right edges. */
-body { background: linear-gradient(90deg, #e9e3d3, #ece5d6); }
+/* Repeat the actual supplied paper texture across the entire viewport. */
+body {
+  background: #ebe4d5 url("./assets/parchment-texture.svg") repeat;
+  background-size: 268px 268px;
+}
 .portal-page {
   display: grid;
   place-items: center;
