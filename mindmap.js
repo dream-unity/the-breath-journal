@@ -4,7 +4,7 @@ if (new URLSearchParams(location.search).get('world') === 'maker') initMindMaps(
 
 function initMindMaps() {
   const $ = id => document.getElementById(id);
-  const el = Object.fromEntries(['mindMapWorkspace','savedMaps','newMap','importMap','mapFile','mapMessage','mapEmpty','mapEditor','mapTitle','mapSaveStatus','saveMap','exportMap','deleteMap','youtubeForm','youtubeUrl','youtubeStatus','videoDropZone','videoStage','videoActions','openYoutube','removeVideo','addChild','addSibling','removeNode','arrangeMap','zoomOut','zoomIn','fitMap','mapZoom','mapViewport','mapSpace','mapCanvas','mapConnections','mapNodes','nodeLabel','nodeNotes','nodeParent'].map(id => [id, $(id)]));
+  const el = Object.fromEntries(['mindMapWorkspace','savedMaps','newMap','importMap','mapFile','mapMessage','mapEmpty','mapEditor','mapTitle','mapSaveStatus','saveMap','exportMap','deleteMap','youtubeForm','youtubeUrl','youtubeStatus','videoDropZone','videoSize','videoStage','videoActions','openYoutube','removeVideo','addChild','addSibling','removeNode','arrangeMap','zoomOut','zoomIn','fitMap','mapZoom','mapViewport','mapSpace','mapCanvas','mapConnections','mapNodes','nodeLabel','nodeNotes','nodeParent'].map(id => [id, $(id)]));
   let current = null, selectedId = null, maps = [], revision = 0, savedRevision = 0;
   let saveTimer = 0, queue = Promise.resolve(), busy = false, scale = 1, boardWidth = 720, boardHeight = 440;
   const uid = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -12,6 +12,15 @@ function initMindMaps() {
   const message = text => { el.mapMessage.textContent = text; el.mapMessage.hidden = !text; };
   const report = error => message(error?.name === 'QuotaExceededError' ? 'This browser is out of storage. Export your map now to keep a copy, then free some space and try Save now.' : error?.message || 'The map could not be saved. Export a backup and try again.');
   el.mindMapWorkspace.hidden = false;
+  // Presentation only: always start at Regular, without changing saved map data.
+  el.videoSize.value = 'regular';
+  el.videoDropZone.dataset.videoSize = 'regular';
+  el.videoSize.addEventListener('change', () => {
+    const size = ['regular', 'large', 'very-large'].includes(el.videoSize.value) ? el.videoSize.value : 'regular';
+    el.videoSize.value = size;
+    el.videoDropZone.dataset.videoSize = size;
+    // Keep the current iframe mounted so resizing never restarts playback.
+  });
 
   function refreshLibrary() {
     el.savedMaps.replaceChildren();
@@ -56,10 +65,11 @@ function initMindMaps() {
     busy = true;
     // Prevent edits during navigation while the current map is being committed.
     el.mapEditor.inert = true;
+    el.videoDropZone.inert = true;
     el.newMap.disabled = el.importMap.disabled = el.savedMaps.disabled = true;
     try { if (saveFirst) await persist(); else { clearTimeout(saveTimer); await queue.catch(() => {}); } await action(); message(''); }
     catch (error) { report(error); refreshLibrary(); }
-    finally { busy = false; el.mapEditor.inert = false; el.newMap.disabled = el.importMap.disabled = el.savedMaps.disabled = false; }
+    finally { busy = false; el.mapEditor.inert = el.videoDropZone.inert = false; el.newMap.disabled = el.importMap.disabled = el.savedMaps.disabled = false; }
   }
 
   function openMap(map) {
@@ -68,6 +78,7 @@ function initMindMaps() {
     selectedId = current?.nodes.find(node => node.parentId === null)?.id;
     el.mapEmpty.hidden = !!current;
     el.mapEditor.hidden = !current;
+    el.videoDropZone.hidden = !current;
     refreshLibrary();
     if (!current) { el.videoStage.replaceChildren(); return; }
     el.mapTitle.value = current.title;
