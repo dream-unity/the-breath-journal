@@ -8,6 +8,12 @@ A static GitHub Pages site with three portals:
 | Mind-Mapping Videos | `journal.html?world=maker` |
 | World Perspectives | `journal.html?world=reality` |
 
+## Artwork front page
+
+The home page uses the approved graphite artwork in `assets/dream-unity-portals.webp`, encoded at its original 1254 × 1254 dimensions. Each entire portal ring is a native circular link, including its inner title area. Image and click areas share one square container, so their alignment survives viewport changes. The side links take precedence where their rings overlap the central ring, matching the drawing. The surrounding large ring and the square corners of each hit area's bounding box are inactive.
+
+The landing page needs no JavaScript, preserves normal browser zoom, and supports keyboard navigation in left-to-right order with a visible focus ring. Existing journal routes and browser-local data are unchanged.
+
 ## Mind-Mapping Videos
 
 Choose **New map**, name it, and select an idea to edit its text and notes. **Add branch** connects a new idea to the selected idea; **Add sibling** connects it to the same parent. Drag ideas, use Alt + arrow keys, or choose **Arrange**. The **Connect to** field moves an idea's branch under another idea while preventing cycles. Zoom and **Fit map** help navigate larger maps.

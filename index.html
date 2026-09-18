@@ -3,41 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
-  <meta name="description" content="Dream Unity front-page 3D visualization." />
-  <title>Dream Unity</title>
-  <link rel="stylesheet" href="./styles.css?v=20260918-mind-maps-1" />
+  <meta name="theme-color" content="#e9e1d3" />
+  <meta name="description" content="Enter Dream Unity: Video Journal, Mind-Mapping Videos and World Perspectives." />
+  <title>Dream Unity · Journals</title>
+  <link rel="preload" as="image" href="./assets/dream-unity-portals.webp" type="image/webp" />
+  <link rel="stylesheet" href="./styles.css?v=20260918-graphite-portals-1" />
 </head>
 <body>
-  <main id="app" aria-label="Dream Unity front-page 3D visualization">
-    <canvas id="world" aria-label="Interactive Dream Unity 3D field"></canvas>
-    <div class="brand"><i></i><span>DREAM UNITY</span></div>
-    <div class="live"><i></i><span>LIVE</span></div>
+  <main class="portal-page">
+    <h1 class="visually-hidden">Dream Unity</h1>
+    <nav class="portal-artwork" aria-label="Choose a Dream Unity portal">
+      <img class="portal-image" src="./assets/dream-unity-portals.webp" width="1254" height="1254" alt="" fetchpriority="high" draggable="false" />
 
-    <div class="unlock-countdown" id="unlockCountdown" role="timer" aria-live="off" aria-label="Countdown until September 6, 2026 in Israel">
-      <span>UNLOCKED IN</span>
-      <strong id="countdownValue">--D&nbsp;&nbsp;--:--:--</strong>
-      <small>ISRAEL · 6 SEP</small>
-    </div>
-
-    <a class="world-label" id="label-machine" data-world="machine" href="./journal.html?world=machine" aria-label="Enter the Video Journal">
-      <span>01</span><strong>VIDEO JOURNAL</strong>
-    </a>
-    <a class="world-label" id="label-maker" data-world="maker" href="./journal.html?world=maker" aria-label="Enter the Mind-Mapping Videos">
-      <span>02</span><strong>MIND-MAPPING VIDEOS</strong>
-    </a>
-    <a class="world-label" id="label-reality" data-world="reality" href="./journal.html?world=reality" aria-label="Enter the World Perspectives">
-      <span>03</span><strong>WORLD PERSPECTIVES</strong>
-    </a>
-
-    <div class="unity-label" id="unityLabel" aria-hidden="true"><span></span><b>UNITY</b></div>
-    <div class="hint" id="hint">DRAG TO ORBIT · TAP A WORLD TO ENTER · PINCH TO ZOOM</div>
-    <div class="loading" id="loading" aria-hidden="true"><span></span></div>
+      <!-- Coordinates are measured against the full 1254 × 1254 artwork.
+           The side rings sit above the central ring where their rims overlap. -->
+      <a class="portal portal--machine" href="./journal.html?world=machine" aria-label="Video Journal" title="Open Video Journal">
+        <span class="visually-hidden">Video Journal</span>
+      </a>
+      <a class="portal portal--maker" href="./journal.html?world=maker" aria-label="Mind-Mapping Videos" title="Open Mind-Mapping Videos">
+        <span class="visually-hidden">Mind-Mapping Videos</span>
+      </a>
+      <a class="portal portal--reality" href="./journal.html?world=reality" aria-label="World Perspectives" title="Open World Perspectives">
+        <span class="visually-hidden">World Perspectives</span>
+      </a>
+    </nav>
   </main>
-
-  <noscript>This experience requires JavaScript.</noscript>
-  <script src="./light-theme.js?v=20260826-front-only-1"></script>
-  <script src="./visual-loader.js?v=20260918-mind-maps-1"></script>
-  <script src="./countdown.js?v=20260826-israel-countdown-1"></script>
 </body>
 </html>
