@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f6faf8" />
+  <title>Set up downloads · Dream Unity</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f6faf8;color:#203b2e;font:16px/1.65 system-ui,sans-serif}main{width:min(760px,calc(100% - 36px));margin:48px auto 72px}a{color:#007e4d;text-underline-offset:3px}a:focus-visible,summary:focus-visible{outline:3px solid #00a868;outline-offset:4px}.eyebrow{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#5f7669}h1{font:400 clamp(34px,6vw,48px)/1.15 Georgia,serif;margin:18px 0}h2{font-size:21px;line-height:1.3;margin:0 0 12px}section{background:white;border:1px solid #d4e2d9;border-radius:14px;padding:24px;margin:20px 0}p{margin:10px 0}li{margin:10px 0}pre{padding:16px;background:#edf5f0;border-radius:9px;overflow:auto;font-size:13px;line-height:1.8}code{font-family:ui-monospace,monospace}summary{cursor:pointer;font-weight:650;padding:10px 0}.button{display:inline-block;padding:11px 18px;background:#007e4d;color:#fff;text-decoration:none;border-radius:9px}.note{color:#546b5d;font-size:14px}.back{font-size:14px}ol,ul{padding-left:23px}@media(max-width:480px){main{margin-top:24px}section{padding:18px}}
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="../journal.html?world=maker">← Mind-Mapping Videos</a>
+    <p class="eyebrow">Dream Unity · Downloads</p>
+    <h1>Keep a video.<br />Take its audio with you.</h1>
+    <p>Set up the free Download Helper on a Windows, macOS or Linux computer. Then use <strong>Download video</strong> or <strong>Download MP3</strong> beneath any linked video in your mind map.</p>
+    <p class="note">This feature needs the helper running on the same computer as your browser. A phone or tablet cannot use a helper running on another device.</p>
+
+    <section aria-labelledby="install">
+      <h2 id="install">1. Install the required tools</h2>
+      <p>Install <a href="https://www.python.org/downloads/" target="_blank" rel="noopener noreferrer">Python 3.10 or newer</a>, <a href="https://ffmpeg.org/download.html" target="_blank" rel="noopener noreferrer">FFmpeg (including ffprobe)</a>, and <a href="https://docs.deno.com/runtime/getting_started/installation/" target="_blank" rel="noopener noreferrer">Deno</a> using their instructions for your computer.</p>
+      <p class="note">FFmpeg and Deno must be available from your terminal. Open a new terminal after installing them. The helper will report any missing tools when you connect.</p>
+      <p><a class="button" href="./dream-unity-helper.py" download="dream-unity-helper.py">Download the helper</a></p>
+      <p>Open a terminal in the folder where you saved <code>dream-unity-helper.py</code>. Expand the instructions for your computer:</p>
+      <details>
+        <summary>Windows</summary>
+        <p>Run these commands in PowerShell. The first two commands create a separate environment and install the downloader:</p>
+        <pre><code>py -m venv dream-unity-downloads-env
+dream-unity-downloads-env\Scripts\python -m pip install --upgrade "yt-dlp[default]"
+dream-unity-downloads-env\Scripts\python dream-unity-helper.py</code></pre>
+      </details>
+      <details>
+        <summary>macOS or Linux</summary>
+        <p>Run these commands in Terminal. The first two commands create a separate environment and install the downloader:</p>
+        <pre><code>python3 -m venv dream-unity-downloads-env
+dream-unity-downloads-env/bin/python -m pip install --upgrade "yt-dlp[default]"
+dream-unity-downloads-env/bin/python dream-unity-helper.py</code></pre>
+        <p class="note">On Linux, your distribution may require its <code>python3-venv</code> package first.</p>
+      </details>
+    </section>
+
+    <section aria-labelledby="connect">
+      <h2 id="connect">2. Connect your browser</h2>
+      <ol>
+        <li>Keep the helper's terminal window open. Copy the connection code it displays.</li>
+        <li>Return to your existing mind-map tab. Beneath a YouTube player, open <strong>Download setup</strong>, paste the code, and choose <strong>Connect helper</strong>.</li>
+        <li>If your browser asks, allow this site to connect to the helper on your local computer.</li>
+        <li>Choose <strong>Download video</strong> or <strong>Download MP3</strong>. When complete, the filename appears beneath that video. Use <strong>Open downloads folder</strong> to find it.</li>
+      </ol>
+      <p>Files are saved in <strong>Downloads → Dream Unity</strong> in your home folder. Video downloads contain the complete video, up to 1080p; a timestamp in the YouTube link does not trim the download. MP3 downloads contain the complete audio.</p>
+      <p class="note">The connection code is kept only in this page's memory. Reconnect after reloading the page, and use the new code whenever you restart the helper.</p>
+    </section>
+
+    <section aria-labelledby="daily">
+      <h2 id="daily">Next time</h2>
+      <p>Run only the final command for your computer to start the helper again, then reconnect using its new code. Press <kbd>Ctrl</kbd> + <kbd>C</kbd> in the terminal when you have finished. Completed downloads remain on your computer.</p>
+      <p>The helper handles one download at a time. You can keep watching, editing your map, or switching ideas while it works. Each progress message stays associated with the video and idea that started it.</p>
+    </section>
+
+    <section aria-labelledby="help">
+      <h2 id="help">If a download cannot complete</h2>
+      <ul>
+        <li><strong>Cannot connect:</strong> check the helper is running on this computer, paste its current code, and check the browser's local-network permission for this site. No remote server is needed.</li>
+        <li><strong>Missing tools:</strong> install the tools listed by the helper and restart it. For yt-dlp updates, repeat the installation command above.</li>
+        <li><strong>Video unavailable:</strong> YouTube may restrict downloads or require sign-in, and its delivery system can change. This helper does not import browser cookies, sign into YouTube, or bypass protected content. A playable embed does not guarantee a downloadable file.</li>
+        <li><strong>Download interrupted:</strong> keep the computer awake and the helper running. The helper limits each job to one hour, videos to three hours, and working files to 2 GiB. Cancel an active download beneath its player if needed.</li>
+      </ul>
+      <p class="note">Download only content you own or have permission to save. This helper uses <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a> and FFmpeg. Requests for the chosen video go directly from your computer to YouTube; mind-map titles, notes and recordings are not sent to the helper. Your own Internet connection and disk space are used.</p>
+    </section>
+  </main>
+</body>
+</html>

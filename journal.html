@@ -7,7 +7,7 @@
   <meta name="description" content="A private, device-local Dream Unity video journal." />
   <title>Video Journal · Dream Unity</title>
   <link rel="stylesheet" href="./journal.css?v=20260918-mind-maps-1" />
-  <link rel="stylesheet" href="./mindmap.css?v=20260918-independent-players-5" />
+  <link rel="stylesheet" href="./mindmap.css?v=20260918-local-downloads-1" />
 </head>
 <body data-world="machine">
   <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -49,6 +49,7 @@
         </div>
         <p id="videoContext" class="map-video-context" role="status" aria-live="polite">Map video</p>
         <div id="videoStage" class="map-video-stage" tabindex="-1"><div class="map-video-placeholder">Your video appears here.<br />You can also map without a video.</div></div>
+        <section id="videoDownloads" class="yt-download" hidden></section>
         <div id="videoActions" class="map-video-actions" hidden><a id="openYoutube" target="_blank" rel="noopener noreferrer">Open on YouTube ↗</a><button id="removeVideo" type="button">Remove map video</button></div>
         <form id="youtubeForm" novalidate>
           <label for="youtubeUrl">YouTube video link for this map</label>
@@ -128,6 +129,7 @@
                   </select>
                 </div>
                 <div id="nodeVideoStage" class="map-video-stage" aria-label="YouTube player for the selected idea"></div>
+                <section id="nodeVideoDownloads" class="yt-download" hidden></section>
               </div>
               <p id="nodeYoutubeHelp" class="map-help">Saved with this idea and played here. The main map video continues independently.</p>
               <p id="nodeYoutubeStatus" class="map-help" role="status" aria-live="polite"></p>
@@ -217,6 +219,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script src="./journal.js?v=20260918-mind-maps-1"></script>
-  <script type="module" src="./mindmap.js?v=20260918-independent-players-5"></script>
+  <script type="module" src="./mindmap.js?v=20260918-local-downloads-1"></script>
 </body>
 </html>

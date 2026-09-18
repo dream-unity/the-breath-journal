@@ -1,6 +1,7 @@
 import { createMap, listMaps, saveMap, deleteMap, parseYouTubeUrl, serializeMap, importMap } from './mindmap-core.js?v=20260918-independent-players-5';
 import { createIdeaRecorder } from './idea-recorder.js?v=20260918-independent-players-5';
 import { createYouTubePlayer } from './youtube-player.js?v=20260918-independent-players-5';
+import { createYouTubeDownloads } from './youtube-downloads.js?v=20260918-local-downloads-1';
 
 if (new URLSearchParams(location.search).get('world') === 'maker') initMindMaps();
 
@@ -10,6 +11,8 @@ function initMindMaps() {
   let current = null, selectedId = null, maps = [], revision = 0, savedRevision = 0;
   const mainPlayer = createYouTubePlayer(el.videoStage, 'Your video appears here. You can also map without a video.');
   const ideaPlayer = createYouTubePlayer(el.nodeVideoStage);
+  const mainDownloads = createYouTubeDownloads($('videoDownloads'), {label:'Map video downloads'});
+  const ideaDownloads = createYouTubeDownloads($('nodeVideoDownloads'), {label:'Idea video downloads'});
   let saveTimer = 0, queue = Promise.resolve(), busy = false, scale = 1, boardWidth = 720, boardHeight = 440;
   const uid = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const selected = () => current?.nodes.find(node => node.id === selectedId);
@@ -92,6 +95,8 @@ function initMindMaps() {
     // Stop the previous map's playback even if the next map links the same video.
     mainPlayer.clear();
     ideaPlayer.clear();
+    mainDownloads.setVideo(null, null);
+    ideaDownloads.setVideo(null, null);
     el.nodeVideoPlayer.hidden = true;
     current = map ? structuredClone(map) : null;
     revision = savedRevision = 0;
@@ -276,12 +281,14 @@ function initMindMaps() {
     el.videoActions.hidden = !video;
     if (video) el.openYoutube.href = video.url; else el.openYoutube.removeAttribute('href');
     mainPlayer.show(video, current?.id, 'YouTube video for this mind map');
+    mainDownloads.setVideo(video, current?.id);
   }
 
   function renderNodePlayer() {
     const node = selected();
     el.nodeVideoPlayer.hidden = !node?.video;
     ideaPlayer.show(node?.video, node ? `${current.id}:${node.id}` : null, `YouTube video for idea: ${node?.label || 'Untitled idea'}`);
+    ideaDownloads.setVideo(node?.video, node ? `${current.id}:${node.id}` : null);
   }
 
   function renderNodeVideo(status = '') {
