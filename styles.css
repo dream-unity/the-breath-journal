@@ -33,6 +33,10 @@ body {
   aspect-ratio: 1;
   user-select: none;
   pointer-events: none;
+  /* Blend only the outer paper margin into the surrounding texture.
+     The outer guide circle starts beyond this 2% margin; links are separate. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 2%, #000 98%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 2%, #000 98%, transparent);
 }
 .portal {
   position: absolute;
