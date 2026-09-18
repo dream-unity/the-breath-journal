@@ -7,7 +7,7 @@
   <meta name="description" content="A private, device-local Dream Unity video journal." />
   <title>Video Journal · Dream Unity</title>
   <link rel="stylesheet" href="./journal.css?v=20260918-mind-maps-1" />
-  <link rel="stylesheet" href="./mindmap.css?v=20260918-idea-recordings-4" />
+  <link rel="stylesheet" href="./mindmap.css?v=20260918-independent-players-5" />
 </head>
 <body data-world="machine">
   <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -49,7 +49,7 @@
         </div>
         <p id="videoContext" class="map-video-context" role="status" aria-live="polite">Map video</p>
         <div id="videoStage" class="map-video-stage" tabindex="-1"><div class="map-video-placeholder">Your video appears here.<br />You can also map without a video.</div></div>
-        <div id="videoActions" class="map-video-actions" hidden><a id="openYoutube" target="_blank" rel="noopener noreferrer">Open on YouTube ↗</a><button id="showMapVideo" type="button" hidden>Watch map video</button><button id="removeVideo" type="button">Remove map video</button></div>
+        <div id="videoActions" class="map-video-actions" hidden><a id="openYoutube" target="_blank" rel="noopener noreferrer">Open on YouTube ↗</a><button id="removeVideo" type="button">Remove map video</button></div>
         <form id="youtubeForm" novalidate>
           <label for="youtubeUrl">YouTube video link for this map</label>
           <input id="youtubeUrl" type="text" inputmode="url" maxlength="4096" placeholder="Paste or drop a YouTube link" autocomplete="off" aria-describedby="youtubeHelp youtubeStatus" />
@@ -111,17 +111,27 @@
               <div data-recorder-list class="idea-recordings" aria-label="Recordings for the selected idea"></div>
               <p class="map-help idea-recording-backup">Saved in this browser on this device. Map JSON backups exclude recordings; use Download on a recording to keep a video copy.</p>
             </section>
-            <section id="nodeVideoPanel" class="map-node-video" aria-labelledby="nodeVideoHeading">
+            <section id="nodeVideoPanel" class="map-node-video" data-video-size="regular" aria-labelledby="nodeVideoHeading">
               <h3 id="nodeVideoHeading">YouTube video for this idea</h3>
               <form id="nodeYoutubeForm" novalidate>
                 <label for="nodeYoutubeUrl">YouTube video link for this idea</label>
                 <input id="nodeYoutubeUrl" type="text" inputmode="url" maxlength="4096" placeholder="Paste or drop a YouTube link for this branch" autocomplete="off" aria-describedby="nodeYoutubeHelp nodeYoutubeStatus" />
                 <button class="map-primary" type="submit">Link video</button>
               </form>
-              <p id="nodeYoutubeHelp" class="map-help">Saved with this idea. Select a branch with a video to watch it in the player at the top.</p>
+              <div id="nodeVideoPlayer" class="map-node-video-player" hidden>
+                <div class="map-node-video-size">
+                  <label for="nodeVideoSize">Idea video size</label>
+                  <select id="nodeVideoSize" aria-controls="nodeVideoStage" autocomplete="off">
+                    <option value="regular" selected>Regular</option>
+                    <option value="large">Large</option>
+                    <option value="very-large">Very large</option>
+                  </select>
+                </div>
+                <div id="nodeVideoStage" class="map-video-stage" aria-label="YouTube player for the selected idea"></div>
+              </div>
+              <p id="nodeYoutubeHelp" class="map-help">Saved with this idea and played here. The main map video continues independently.</p>
               <p id="nodeYoutubeStatus" class="map-help" role="status" aria-live="polite"></p>
               <div id="nodeVideoActions" class="map-node-video-actions" hidden>
-                <button id="watchNodeVideo" type="button">Watch video</button>
                 <a id="openNodeYoutube" target="_blank" rel="noopener noreferrer">Open branch video on YouTube ↗</a>
                 <button id="removeNodeVideo" type="button">Remove branch video</button>
               </div>
@@ -207,6 +217,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script src="./journal.js?v=20260918-mind-maps-1"></script>
-  <script type="module" src="./mindmap.js?v=20260918-idea-recordings-4"></script>
+  <script type="module" src="./mindmap.js?v=20260918-independent-players-5"></script>
 </body>
 </html>

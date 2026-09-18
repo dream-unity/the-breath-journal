@@ -17,17 +17,35 @@ class Events {
   emit(name, event = {}) { return Promise.all((this.listeners.get(name) || []).slice().map(entry => { if (entry.once) this.removeEventListener(name, entry.fn); return entry.fn(event); })); }
 }
 class Element extends Events {
-  constructor(tag = 'div') { super(); this.tagName = tag; this.children = []; this.attributes = {}; this.hidden = false; this.disabled = false; this.textContent = ''; this.paused = false; }
-  append(child) { this.children.push(child); }
-  replaceChildren(...children) { this.children = children; }
+  constructor(tag = 'div') {
+    super(); this.tagName = tag; this.children = []; this.attributes = {}; this.hidden = false; this.disabled = false; this.textContent = '';
+    this.paused = true; this.currentTime = 0; this.pauseCount = 0; this.loadCount = 0; this.sourceChanges = 0; this.disconnections = 0; this.parentNode = null;
+  }
+  set src(value) { this.source = value; this.currentTime = 0; this.sourceChanges++; }
+  get src() { return this.source; }
+  append(child) { this.insertBefore(child, null); }
+  insertBefore(child, next) {
+    child.remove();
+    const index = next ? this.children.indexOf(next) : this.children.length;
+    if (index < 0) throw new Error('Insertion reference is not a child');
+    this.children.splice(index, 0, child); child.parentNode = this;
+  }
+  disconnect() { this.disconnections++; for (const child of this.children) child.disconnect(); }
+  remove() {
+    if (!this.parentNode) return;
+    const siblings = this.parentNode.children;
+    siblings.splice(siblings.indexOf(this), 1); this.parentNode = null; this.disconnect();
+  }
+  replaceChildren(...children) { for (const child of [...this.children]) child.remove(); for (const child of children) this.append(child); }
   querySelectorAll(tag) { return this.children.flatMap(child => [...(child.tagName === tag ? [child] : []), ...child.querySelectorAll(tag)]); }
   setAttribute(key, value) { this.attributes[key] = value; }
   removeAttribute(key) { delete this.attributes[key]; if (key === 'src') this.src = ''; }
-  pause() { this.paused = true; }
+  pause() { this.paused = true; this.pauseCount++; }
   play() { this.paused = false; return Promise.resolve(); }
-  load() { this.loaded = true; }
-  click() { return this.disabled ? Promise.resolve() : this.emit('click'); }
+  load() { this.loaded = true; this.currentTime = 0; this.paused = true; this.loadCount++; }
+  click() { return this.disabled || this.hidden ? Promise.resolve() : this.emit('click'); }
 }
+
 class Track extends Events { stopped = false; stop() { this.stopped = true; } }
 const newStream = () => { const tracks = [new Track(), new Track()]; return { getTracks: () => tracks }; };
 function harness(overrides = {}) {
@@ -49,7 +67,11 @@ function harness(overrides = {}) {
   const storage = {
     listIdeaRecordings: async (mapId, nodeId) => stored.filter(record => record.mapId === mapId && record.nodeId === nodeId),
     saveIdeaRecording: async record => { calls.saved.push(record); stored.push(record); return record; },
-    deleteIdeaRecording: async (mapId, nodeId, recordId) => { calls.deleted.push([mapId, nodeId, recordId]); },
+    deleteIdeaRecording: async (mapId, nodeId, recordId) => {
+      calls.deleted.push([mapId, nodeId, recordId]);
+      const index = stored.findIndex(record => record.mapId === mapId && record.nodeId === nodeId && record.id === recordId);
+      if (index >= 0) stored.splice(index, 1);
+    },
     ...overrides.storage,
   };
   const options = {
@@ -64,7 +86,7 @@ function harness(overrides = {}) {
   return { controller, elements, calls, root, storage, stored, lifecycle, options };
 }
 async function record(h, owner = a) { h.controller.setIdea(owner); await settle(); await h.elements.enable.click(); await h.elements.start.click(); }
-const cardButtons = h => h.elements.list.querySelectorAll('button');
+const cardButtons = h => h.elements.list.querySelectorAll('button').filter(button => !button.hidden);
 const cardVideos = h => h.elements.list.querySelectorAll('video');
 
 // These tests exercise ownership races, resource cleanup, and recovery rather than CSS/markup.
@@ -203,4 +225,102 @@ test('pagehide stops camera tracks and clears all playback URLs synchronously', 
   assert.equal(h.calls.created.every(url => h.calls.revoked.includes(url)), true);
   assert.equal(cardVideos(h).length, 0);
   assert.equal(h.elements.preview.srcObject, null);
+});
+
+
+const savedRecording = (id, createdAt = '2026-09-18T12:00:00.000Z') => ({
+  ...a, id, createdAt, durationMs: 90000, mimeType: 'video/webm', blob: new Blob(['saved-video'], { type: 'video/webm' }),
+});
+const playbackSnapshot = video => ({
+  src: video.src, currentTime: video.currentTime, paused: video.paused,
+  sourceChanges: video.sourceChanges, pauseCount: video.pauseCount, loadCount: video.loadCount, disconnections: video.disconnections,
+});
+
+// Background playback depends on retaining the same connected media element and source.
+test('saving another recording and refreshing cloned stored records preserves playing video and playhead', async () => {
+  const save = deferred(), refresh = deferred();
+  let listReads = 0;
+  const existing = savedRecording('existing');
+  const h = harness({ storage: {
+    listIdeaRecordings: async () => ++listReads === 1 ? [existing] : refresh.promise,
+    saveIdeaRecording: record => { h.calls.saved.push(record); return save.promise; },
+  } });
+  await record(h);
+  const playing = cardVideos(h)[0];
+  await playing.play(); playing.currentTime = 37.25;
+  const before = playbackSnapshot(playing);
+  await h.elements.stop.click(); await settle();
+  assert.equal(cardVideos(h).includes(playing), true);
+  assert.deepEqual(playbackSnapshot(playing), before, 'creating the pending card must leave existing playback untouched');
+  const pendingVideo = cardVideos(h).find(video => video !== playing);
+  await pendingVideo.play(); pendingVideo.currentTime = 1.5;
+  const pendingBefore = playbackSnapshot(pendingVideo);
+  save.resolve(h.calls.saved[0]); await settle();
+  assert.deepEqual(playbackSnapshot(playing), before, 'save completion must not reset another recording');
+  assert.deepEqual(playbackSnapshot(pendingVideo), pendingBefore, 'saving the playing recording must retain its pending player');
+  refresh.resolve([structuredClone(existing), structuredClone(h.calls.saved[0])]); await settle();
+  assert.equal(cardVideos(h).includes(playing), true);
+  assert.equal(cardVideos(h).includes(pendingVideo), true);
+  assert.deepEqual(playbackSnapshot(playing), before, 'IndexedDB clones must reuse the same video element and URL');
+  assert.deepEqual(playbackSnapshot(pendingVideo), pendingBefore);
+  assert.equal(h.calls.created.length, 2);
+  assert.equal(h.calls.revoked.length, 0);
+});
+
+test('deleting one recording releases only its player while another keeps playing', async () => {
+  const h = harness();
+  h.stored.push(savedRecording('keep-playing'), savedRecording('delete-me', '2026-09-17T12:00:00.000Z'));
+  h.controller.setIdea(a); await settle();
+  const [playing, removed] = cardVideos(h);
+  await playing.play(); playing.currentTime = 19.5;
+  const before = playbackSnapshot(playing), removedUrl = removed.src;
+  const deleteButton = removed.parentNode.querySelectorAll('button').find(button => button.textContent === 'Delete recording');
+  await deleteButton.click(); await settle();
+  assert.deepEqual(cardVideos(h), [playing]);
+  assert.deepEqual(playbackSnapshot(playing), before);
+  assert.equal(removed.paused, true);
+  assert.equal(removed.src, '');
+  assert.deepEqual(h.calls.revoked, [removedUrl]);
+});
+
+test('retrying a failed save updates status without restarting its playing recording', async () => {
+  let failing = true;
+  const h = harness({ storage: { saveIdeaRecording: async record => {
+    if (failing) throw new Error('Temporary failure');
+    h.stored.push(structuredClone(record));
+    return structuredClone(record);
+  } } });
+  await record(h); await h.elements.stop.click(); await settle();
+  const playing = cardVideos(h)[0];
+  await playing.play(); playing.currentTime = 3.25;
+  const before = playbackSnapshot(playing);
+  failing = false;
+  await cardButtons(h).find(button => button.textContent === 'Retry save').click(); await settle();
+  assert.deepEqual(cardVideos(h), [playing]);
+  assert.deepEqual(playbackSnapshot(playing), before);
+  assert.equal(cardButtons(h).some(button => button.textContent === 'Retry save'), false);
+  assert.equal(h.calls.revoked.length, 0);
+});
+
+test('switching browser tabs or focus does not pause, reset or unmount current-idea playback', async () => {
+  const h = harness();
+  h.stored.push(savedRecording('background'));
+  h.controller.setIdea(a); await settle();
+  const playing = cardVideos(h)[0];
+  await playing.play(); playing.currentTime = 12.75;
+  const before = playbackSnapshot(playing);
+  await h.lifecycle.emit('blur');
+  await h.lifecycle.emit('visibilitychange', { visibilityState: 'hidden' });
+  h.controller.setIdea({ ...a, label: 'Renamed while playing' });
+  await h.lifecycle.emit('visibilitychange', { visibilityState: 'visible' });
+  await h.lifecycle.emit('focus');
+  assert.deepEqual(cardVideos(h), [playing]);
+  assert.deepEqual(playbackSnapshot(playing), before);
+  assert.equal(h.calls.revoked.length, 0);
+  // Scope privacy still applies even when another map reuses the same node ID.
+  h.controller.setIdea({ ...a, mapId: 'another-map' });
+  assert.equal(cardVideos(h).length, 0);
+  assert.equal(playing.paused, true);
+  assert.equal(playing.src, '');
+  assert.equal(h.calls.revoked.includes(before.src), true);
 });

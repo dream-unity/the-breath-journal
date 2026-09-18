@@ -1,4 +1,4 @@
-import { saveIdeaRecording, listIdeaRecordings, deleteIdeaRecording } from './mindmap-core.js?v=20260918-idea-recordings-4';
+import { saveIdeaRecording, listIdeaRecordings, deleteIdeaRecording } from './mindmap-core.js?v=20260918-independent-players-5';
 
 const keyOf = scope => scope ? `${scope.mapId}\u0000${scope.nodeId}` : '';
 const durationText = ms => {
@@ -36,7 +36,8 @@ export function createIdeaRecorder({
   const doc = root.ownerDocument;
   const pending = new Map();
   const sessions = new Set();
-  const liveUrls = new Set();
+  const cards = new Map();
+  let emptyCard = null;
   let scope = null, epoch = 0, loadSequence = 0, disposed = false;
   let stream = null, cameraRequest = null, startRequest = null, recording = null, timer = null;
   let savedRecords = [], removeTrackListeners = () => {};
@@ -52,15 +53,19 @@ export function createIdeaRecorder({
     el.close.disabled = !stream && !cameraRequest && !startRequest;
   }
 
+  function releaseCard(view) {
+    view.video.pause();
+    view.video.removeAttribute('src');
+    view.video.load();
+    view.card.remove();
+    urls.revokeObjectURL(view.url);
+    cards.delete(view.recordId);
+  }
+
   function releaseCards() {
-    for (const video of el.list.querySelectorAll('video')) {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-    }
-    el.list.replaceChildren();
-    for (const url of liveUrls) urls.revokeObjectURL(url);
-    liveUrls.clear();
+    for (const view of cards.values()) releaseCard(view);
+    emptyCard?.remove();
+    emptyCard = null;
   }
 
   function stopCamera() {
@@ -81,74 +86,98 @@ export function createIdeaRecorder({
     return child;
   }
 
+  function createCard(owner, item) {
+    const { record } = item;
+    const generation = epoch;
+    const card = doc.createElement('article');
+    card.className = 'idea-recording-card';
+    const heading = append(card, 'h4', `Recorded ${new Date(record.createdAt).toLocaleString()}`);
+    const video = append(card, 'video');
+    const url = urls.createObjectURL(record.blob);
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
+    video.disablePictureInPicture = true;
+    video.disableRemotePlayback = true;
+    video.src = url;
+    const meta = append(card, 'p', '', 'idea-recording-meta');
+    const actions = append(card, 'div', '', 'idea-recording-actions');
+    const download = append(actions, 'a', 'Download video');
+    download.href = url;
+    const extension = record.mimeType.includes('mp4') ? 'mp4' : 'webm';
+    download.download = `idea-recording-${record.id}.${extension}`;
+    const retry = append(actions, 'button', 'Retry save');
+    retry.type = 'button';
+    const remove = append(actions, 'button', 'Delete recording');
+    remove.type = 'button';
+    remove.className = 'danger';
+    const view = { recordId: record.id, card, heading, video, url, meta, retry, remove, item, deleting: false };
+    const isMounted = () => isCurrent(owner, generation) && cards.get(record.id) === view;
+    retry.addEventListener('click', async () => {
+      const current = view.item;
+      if (!isMounted() || !current.error || current.saving) return;
+      try {
+        await prepare(owner);
+        if (isMounted()) await storeRecording(current);
+      } catch (error) { status(error.message || 'This idea could not be saved. Download your video to keep a copy.', owner, generation); }
+    });
+    remove.addEventListener('click', async () => {
+      if (!isMounted() || view.item.saving || view.deleting || !confirm('Delete this recording from this idea? This cannot be undone.')) return;
+      view.deleting = true;
+      remove.disabled = true;
+      try {
+        if (pending.has(record.id)) pending.delete(record.id);
+        else await storage.deleteIdeaRecording(owner.mapId, owner.nodeId, record.id);
+        if (isMounted()) {
+          loadSequence++;
+          savedRecords = savedRecords.filter(saved => saved.id !== record.id);
+          renderCards();
+          status('Recording deleted from this idea.', owner, generation);
+        }
+      } catch (error) {
+        status(error.message || 'The recording could not be deleted.', owner, generation);
+        if (isMounted()) { view.deleting = false; remove.disabled = false; }
+      }
+    });
+    return view;
+  }
+
   function renderCards() {
-    releaseCards();
-    if (!scope || disposed) return;
+    if (!scope || disposed) { releaseCards(); return; }
     const owner = { ...scope };
     const waiting = [...pending.values()].filter(item => keyOf(item.record) === keyOf(owner));
     const pendingIds = new Set(waiting.map(item => item.record.id));
     const entries = [...savedRecords.filter(record => !pendingIds.has(record.id)).map(record => ({ record })), ...waiting]
+      // Only this exact scope may receive a mounted player or a live object URL.
+      .filter(item => keyOf(item.record) === keyOf(owner))
       .sort((a, b) => Date.parse(b.record.createdAt) - Date.parse(a.record.createdAt));
+    const ids = new Set(entries.map(item => item.record.id));
+    for (const [id, view] of cards) if (!ids.has(id)) releaseCard(view);
     if (!entries.length) {
-      append(el.list, 'p', 'No recordings for this idea yet.', 'idea-recording-empty');
+      if (!emptyCard) emptyCard = append(el.list, 'p', 'No recordings for this idea yet.', 'idea-recording-empty');
       return;
     }
-    for (const item of entries) {
+    emptyCard?.remove();
+    emptyCard = null;
+    for (let index = 0; index < entries.length; index++) {
+      const item = entries[index];
       const { record } = item;
-      // Only this exact scope may receive a mounted player or a live object URL.
-      if (keyOf(record) !== keyOf(owner)) continue;
-      const card = append(el.list, 'article', '', 'idea-recording-card');
-      const heading = append(card, 'h4', `Recorded ${new Date(record.createdAt).toLocaleString()}`);
-      const video = append(card, 'video');
-      const url = urls.createObjectURL(record.blob);
-      liveUrls.add(url);
-      video.controls = true;
-      video.playsInline = true;
-      video.preload = 'metadata';
-      video.disablePictureInPicture = true;
-      video.disableRemotePlayback = true;
-      video.src = url;
-      video.setAttribute('aria-label', `Recording for ${scope.label || 'Untitled idea'} — ${heading.textContent}`);
-      append(card, 'p', `${durationText(record.durationMs)}${item.saving ? ' · Saving…' : item.error ? ' · Not saved — download a copy or retry.' : ' · Saved in this browser'}`, 'idea-recording-meta');
-      const actions = append(card, 'div', '', 'idea-recording-actions');
-      const download = append(actions, 'a', 'Download video');
-      download.href = url;
-      const extension = record.mimeType.includes('mp4') ? 'mp4' : 'webm';
-      download.download = `idea-recording-${record.id}.${extension}`;
-      if (item.error) {
-        const retry = append(actions, 'button', 'Retry save');
-        retry.type = 'button';
-        retry.addEventListener('click', async () => {
-          if (!isCurrent(owner) || item.saving) return;
-          const generation = epoch;
-          try {
-            await prepare(owner);
-            if (isCurrent(owner, generation)) await storeRecording(item);
-          } catch (error) { status(error.message || 'This idea could not be saved. Download your video to keep a copy.', owner, generation); }
-        });
+      let view = cards.get(record.id);
+      if (!view) {
+        view = createCard(owner, item);
+        // Recording IDs and creation dates are immutable. Insert only new cards;
+        // moving an existing media element can interrupt its current playback.
+        const nextView = entries.slice(index + 1).map(entry => cards.get(entry.record.id)).find(Boolean);
+        el.list.insertBefore(view.card, nextView?.card || null);
+        cards.set(record.id, view);
       }
-      const remove = append(actions, 'button', item.error ? 'Discard recording' : 'Delete recording');
-      remove.type = 'button';
-      remove.className = 'danger';
-      remove.disabled = !!item.saving;
-      remove.addEventListener('click', async () => {
-        if (!isCurrent(owner) || !confirm('Delete this recording from this idea? This cannot be undone.')) return;
-        const generation = epoch;
-        remove.disabled = true;
-        try {
-          if (pending.has(record.id)) pending.delete(record.id);
-          else await storage.deleteIdeaRecording(owner.mapId, owner.nodeId, record.id);
-          if (isCurrent(owner, generation)) {
-            loadSequence++;
-            savedRecords = savedRecords.filter(saved => saved.id !== record.id);
-            renderCards();
-            status('Recording deleted from this idea.', owner, generation);
-          }
-        } catch (error) {
-          status(error.message || 'The recording could not be deleted.', owner, generation);
-          if (isCurrent(owner, generation)) remove.disabled = false;
-        }
-      });
+      view.item = item;
+      view.video.setAttribute('aria-label', `Recording for ${scope.label || 'Untitled idea'} — ${view.heading.textContent}`);
+      view.meta.textContent = `${durationText(record.durationMs)}${item.saving ? ' · Saving…' : item.error ? ' · Not saved — download a copy or retry.' : ' · Saved in this browser'}`;
+      view.retry.hidden = !item.error;
+      view.retry.disabled = !item.error || !!item.saving || view.deleting;
+      view.remove.textContent = item.error ? 'Discard recording' : 'Delete recording';
+      view.remove.disabled = !!item.saving || view.deleting;
     }
   }
 

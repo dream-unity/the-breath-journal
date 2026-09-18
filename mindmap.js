@@ -1,13 +1,15 @@
-import { createMap, listMaps, saveMap, deleteMap, parseYouTubeUrl, serializeMap, importMap } from './mindmap-core.js?v=20260918-idea-recordings-4';
-import { createIdeaRecorder } from './idea-recorder.js?v=20260918-idea-recordings-4';
+import { createMap, listMaps, saveMap, deleteMap, parseYouTubeUrl, serializeMap, importMap } from './mindmap-core.js?v=20260918-independent-players-5';
+import { createIdeaRecorder } from './idea-recorder.js?v=20260918-independent-players-5';
+import { createYouTubePlayer } from './youtube-player.js?v=20260918-independent-players-5';
 
 if (new URLSearchParams(location.search).get('world') === 'maker') initMindMaps();
 
 function initMindMaps() {
   const $ = id => document.getElementById(id);
-  const el = Object.fromEntries(['mindMapWorkspace','savedMaps','newMap','importMap','mapFile','mapMessage','mapEmpty','mapEditor','mapTitle','mapSaveStatus','saveMap','exportMap','deleteMap','youtubeForm','youtubeUrl','youtubeStatus','videoDropZone','videoSize','videoStage','videoContext','videoActions','openYoutube','removeVideo','showMapVideo','addChild','addSibling','removeNode','arrangeMap','zoomOut','zoomIn','fitMap','mapZoom','mapViewport','mapSpace','mapCanvas','mapConnections','mapNodes','nodeLabel','nodeNotes','nodeParent','nodeVideoPanel','nodeYoutubeForm','nodeYoutubeUrl','nodeYoutubeStatus','nodeVideoActions','watchNodeVideo','openNodeYoutube','removeNodeVideo'].map(id => [id, $(id)]));
+  const el = Object.fromEntries(['mindMapWorkspace','savedMaps','newMap','importMap','mapFile','mapMessage','mapEmpty','mapEditor','mapTitle','mapSaveStatus','saveMap','exportMap','deleteMap','youtubeForm','youtubeUrl','youtubeStatus','videoDropZone','videoSize','videoStage','videoContext','videoActions','openYoutube','removeVideo','addChild','addSibling','removeNode','arrangeMap','zoomOut','zoomIn','fitMap','mapZoom','mapViewport','mapSpace','mapCanvas','mapConnections','mapNodes','nodeLabel','nodeNotes','nodeParent','nodeVideoPanel','nodeYoutubeForm','nodeYoutubeUrl','nodeYoutubeStatus','nodeVideoActions','nodeVideoPlayer','nodeVideoStage','nodeVideoSize','openNodeYoutube','removeNodeVideo'].map(id => [id, $(id)]));
   let current = null, selectedId = null, maps = [], revision = 0, savedRevision = 0;
-  let playingNodeId = null;
+  const mainPlayer = createYouTubePlayer(el.videoStage, 'Your video appears here. You can also map without a video.');
+  const ideaPlayer = createYouTubePlayer(el.nodeVideoStage);
   let saveTimer = 0, queue = Promise.resolve(), busy = false, scale = 1, boardWidth = 720, boardHeight = 440;
   const uid = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const selected = () => current?.nodes.find(node => node.id === selectedId);
@@ -24,14 +26,16 @@ function initMindMaps() {
   });
   el.mindMapWorkspace.hidden = false;
   // Presentation only: always start at Regular, without changing saved map data.
-  el.videoSize.value = 'regular';
-  el.videoDropZone.dataset.videoSize = 'regular';
-  el.videoSize.addEventListener('change', () => {
-    const size = ['regular', 'large', 'very-large'].includes(el.videoSize.value) ? el.videoSize.value : 'regular';
-    el.videoSize.value = size;
-    el.videoDropZone.dataset.videoSize = size;
-    // Keep the current iframe mounted so resizing never restarts playback.
-  });
+  for (const [select, panel] of [[el.videoSize, el.videoDropZone], [el.nodeVideoSize, el.nodeVideoPanel]]) {
+    select.value = 'regular';
+    panel.dataset.videoSize = 'regular';
+    select.addEventListener('change', () => {
+      const size = ['regular', 'large', 'very-large'].includes(select.value) ? select.value : 'regular';
+      select.value = size;
+      panel.dataset.videoSize = size;
+      // Resize only this player's CSS; never replace either iframe.
+    });
+  }
 
   function refreshLibrary() {
     el.savedMaps.replaceChildren();
@@ -86,8 +90,9 @@ function initMindMaps() {
   function openMap(map) {
     ideaRecorder.setIdea(null);
     // Stop the previous map's playback even if the next map links the same video.
-    el.videoStage.replaceChildren();
-    playingNodeId = null;
+    mainPlayer.clear();
+    ideaPlayer.clear();
+    el.nodeVideoPlayer.hidden = true;
     current = map ? structuredClone(map) : null;
     revision = savedRevision = 0;
     selectedId = current?.nodes.find(node => node.parentId === null)?.id;
@@ -101,6 +106,7 @@ function initMindMaps() {
     el.youtubeUrl.value = current.video?.url || '';
     el.youtubeUrl.removeAttribute('aria-invalid');
     el.youtubeStatus.textContent = '';
+    renderVideo();
     scale = 1;
     renderMap();
     renderInspector();
@@ -133,8 +139,6 @@ function initMindMaps() {
       el.nodeParent.value = node.parentId;
     }
     renderNodeVideo();
-    playingNodeId = node.video ? node.id : null;
-    renderVideo();
   }
 
   function selectNode(id) {
@@ -266,27 +270,18 @@ function initMindMaps() {
   }
 
   function renderVideo() {
-    const node = current?.nodes.find(item => item.id === playingNodeId);
-    if (!node?.video) playingNodeId = null;
-    const video = playingNodeId ? node.video : current?.video;
-    const context = playingNodeId ? `Video for idea: ${node.label || 'Untitled idea'}` : 'Map video';
-    el.videoContext.textContent = context;
+    // The main player belongs to the map, never to the selected branch.
+    const video = current?.video;
+    el.videoContext.textContent = 'Map video';
     el.videoActions.hidden = !video;
-    el.showMapVideo.hidden = !playingNodeId || !current?.video;
-    el.removeVideo.textContent = playingNodeId ? 'Remove this branch video' : 'Remove map video';
     if (video) el.openYoutube.href = video.url; else el.openYoutube.removeAttribute('href');
-    const mounted = el.videoStage.querySelector('iframe');
-    // Selection fires on pointerdown and click; never restart an unchanged video.
-    if (video && mounted?.getAttribute('src') === video.embedUrl) { mounted.title = context; return; }
-    if (!video && el.videoStage.querySelector('.map-video-placeholder')) return;
-    el.videoStage.replaceChildren();
-    if (!video) {
-      const placeholder = document.createElement('div'); placeholder.className='map-video-placeholder'; placeholder.textContent='Your video appears here. You can also map without a video.'; el.videoStage.append(placeholder); return;
-    }
-    const iframe = document.createElement('iframe'); iframe.title=context;
-    iframe.src=video.embedUrl; iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-    iframe.allowFullscreen=true; iframe.referrerPolicy='strict-origin-when-cross-origin';
-    el.videoStage.append(iframe);
+    mainPlayer.show(video, current?.id, 'YouTube video for this mind map');
+  }
+
+  function renderNodePlayer() {
+    const node = selected();
+    el.nodeVideoPlayer.hidden = !node?.video;
+    ideaPlayer.show(node?.video, node ? `${current.id}:${node.id}` : null, `YouTube video for idea: ${node?.label || 'Untitled idea'}`);
   }
 
   function renderNodeVideo(status = '') {
@@ -297,6 +292,7 @@ function initMindMaps() {
     el.nodeVideoActions.hidden = !node?.video;
     if (node?.video) el.openNodeYoutube.href = node.video.url;
     else el.openNodeYoutube.removeAttribute('href');
+    renderNodePlayer();
   }
 
   function refreshNodeBadge(node) {
@@ -310,9 +306,7 @@ function initMindMaps() {
     try {
       const video = parseYouTubeUrl(value);
       if (node.video?.url !== video.url) { node.video = video; refreshNodeBadge(node); changed(); }
-      playingNodeId = node.id;
-      renderNodeVideo('Video linked to this idea. Choose Watch video to go to the player.');
-      renderVideo();
+      renderNodeVideo('Video linked to this idea. Press play in the player below.');
     } catch (error) {
       el.nodeYoutubeUrl.setAttribute('aria-invalid', 'true');
       el.nodeYoutubeStatus.textContent = `${error.message}${node.video ? ' The existing video is unchanged.' : ''}`;
@@ -322,10 +316,8 @@ function initMindMaps() {
   function removeBranchVideo(node) {
     if (!node?.video) return;
     node.video = null;
-    if (playingNodeId === node.id) playingNodeId = null;
     refreshNodeBadge(node);
     if (selectedId === node.id) renderNodeVideo('Video removed from this idea.');
-    renderVideo();
     changed();
   }
 
@@ -334,7 +326,6 @@ function initMindMaps() {
     try {
       const video = parseYouTubeUrl(value);
       if (current.video?.url !== video.url) { current.video=video; changed(); }
-      playingNodeId = null;
       renderVideo();
       el.youtubeUrl.value=video.url; el.youtubeUrl.removeAttribute('aria-invalid');
       el.youtubeStatus.textContent='Video linked. Press play in the player.';
@@ -345,7 +336,7 @@ function initMindMaps() {
   el.savedMaps.addEventListener('change', () => { const id=el.savedMaps.value; withSavedMap(() => openMap(maps.find(map => map.id===id))); });
   el.mapTitle.addEventListener('input', () => { current.title=el.mapTitle.value; changed(); });
   el.saveMap.addEventListener('click', () => persist().then(()=>message('')).catch(report));
-  el.nodeLabel.addEventListener('input', () => { const node=selected(); node.label=el.nodeLabel.value; const button=[...el.mapNodes.children].find(item=>item.dataset.id===node.id); nodeText(button,node); ideaRecorder.setIdea({mapId:current.id,nodeId:node.id,label:node.label || 'Untitled idea'}); if(playingNodeId===node.id)renderVideo(); changed(); });
+  el.nodeLabel.addEventListener('input', () => { const node=selected(); node.label=el.nodeLabel.value; const button=[...el.mapNodes.children].find(item=>item.dataset.id===node.id); nodeText(button,node); ideaRecorder.setIdea({mapId:current.id,nodeId:node.id,label:node.label || 'Untitled idea'}); renderNodePlayer(); changed(); });
   el.nodeNotes.addEventListener('input', () => { const node=selected(); node.notes=el.nodeNotes.value; const button=[...el.mapNodes.children].find(item=>item.dataset.id===node.id); nodeText(button,node); changed(); });
   el.nodeParent.addEventListener('change', () => { const node=selected(), id=el.nodeParent.value; if(node.parentId===null||descendants(node.id).has(id)||!current.nodes.some(item=>item.id===id))return; node.parentId=id; renderMap(); changed(); });
   el.addChild.addEventListener('click',()=>addBranch()); el.addSibling.addEventListener('click',()=>addBranch(true));
@@ -374,16 +365,8 @@ function initMindMaps() {
   bindVideoInput(el.youtubeUrl, el.videoDropZone, loadVideo);
   bindVideoInput(el.nodeYoutubeUrl, el.nodeVideoPanel, loadNodeVideo);
   el.nodeYoutubeForm.addEventListener('submit',event=>{event.preventDefault();loadNodeVideo(el.nodeYoutubeUrl.value);});
-  el.watchNodeVideo.addEventListener('click',()=>{
-    if(!selected()?.video)return;
-    playingNodeId=selectedId;renderVideo();
-    el.videoStage.focus({preventScroll:true});
-    el.videoDropZone.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
-  });
   el.removeNodeVideo.addEventListener('click',()=>removeBranchVideo(selected()));
-  el.showMapVideo.addEventListener('click',()=>{playingNodeId=null;renderVideo();});
   el.removeVideo.addEventListener('click',()=>{
-    if(playingNodeId){removeBranchVideo(current.nodes.find(node=>node.id===playingNodeId));return;}
     current.video=null;el.youtubeUrl.value='';el.youtubeUrl.removeAttribute('aria-invalid');el.youtubeStatus.textContent='Map video removed.';renderVideo();changed();
   });
   el.deleteMap.addEventListener('click',()=>{if(!confirm(`Delete “${current.title || 'Untitled mind map'}” and all its idea recordings from this browser? Export the map and download any recordings you want to keep first.`))return;withSavedMap(async()=>{const id=current.id;ideaRecorder.discardIdeas(id);await deleteMap(id);maps=maps.filter(map=>map.id!==id);openMap(maps[0]||null);},false);});
@@ -397,6 +380,7 @@ function initMindMaps() {
     if(file.size>8*1024*1024)throw new Error('This file is too large. Choose a mind-map JSON backup under 8 MB.');
     const map=importMap(await file.text());await saveMap(map);maps.push(map);openMap(map);
   }));
+  // Backgrounding saves text only. Do not pause, hide, remount or reload media here.
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')persist().catch(report);});
   window.addEventListener('pageshow',event=>{if(event.persisted)renderInspector();});
   window.addEventListener('beforeunload',event=>{if((current&&revision!==savedRevision)||ideaRecorder.hasUnfinished()){persist().catch(()=>{});event.preventDefault();event.returnValue='';}});
