@@ -63,6 +63,21 @@ body[data-world="maker"] .world-heading>p:last-child{margin:10px 0 0;max-width:n
 .map-inspector{padding:18px 20px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .map-inspector .map-notes-field{grid-column:1/-1}
 .map-inspector textarea{resize:vertical;min-height:92px;line-height:1.5}
+.idea-recorder{grid-column:1/-1;min-width:0;padding:18px;border:1px solid #cedfd5;border-radius:12px;background:#f6faf8}
+.idea-recorder-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.idea-recorder h3{margin:0;font-size:17px;font-weight:650;color:#234932}
+.idea-recorder-private{font-size:12px;color:#476759;border:1px solid #d4e1d9;border-radius:20px;padding:5px 9px;background:#fff}
+.idea-recorder-owner{margin:12px 0 0;font-size:14px;color:#354f44;overflow-wrap:anywhere}
+.idea-recorder-preview,.idea-recordings video{display:block;width:min(100%,640px);max-height:60vh;max-height:60svh;aspect-ratio:16/9;object-fit:contain;margin:14px auto;border:1px solid #bdcfc3;border-radius:10px;background:#101b16}
+.idea-recorder-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}
+.idea-recorder-timer{font-variant-numeric:tabular-nums;font-size:14px;color:#496253;margin-left:4px}
+.idea-recordings{display:grid;gap:14px}
+.idea-recordings article{border:1px solid #d6e2da;border-radius:10px;background:#fff;padding:14px;min-width:0}
+.idea-recordings article p{margin:4px 0 10px;font-size:13px;line-height:1.5;color:#496253;overflow-wrap:anywhere}
+.idea-recordings article button,.idea-recordings article a{display:inline-block;margin:4px 8px 0 0}
+.idea-recordings article a{font-size:14px;color:#007e4d;padding:9px 0}
+.idea-recording-backup{margin-bottom:0;border-top:1px solid #dce7e0;padding-top:12px}
+@media(max-width:520px){.idea-recorder{padding:14px}.idea-recorder-controls button{flex:1 1 140px}}
 .map-node-video{grid-column:1/-1;min-width:0;padding-top:4px}
 .map-node-video h3{font-family:inherit;font-size:14px;font-weight:650;color:#354f44;margin:0 0 12px}
 .map-node-video form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}

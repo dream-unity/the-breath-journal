@@ -238,18 +238,31 @@ function installDatabaseHarness(t) {
   globalThis.indexedDB = {
     open(name, version) {
       assert.equal(name, 'dream-unity-mind-maps');
-      assert.equal(version, 1);
+      assert.equal(version, 2);
       openCount++;
       const request = {};
       const database = {
         closeCount: 0,
         close() { this.closeCount++; },
         transaction(store, mode) {
-          assert.equal(store, 'maps');
+          assert.ok(store === 'maps' || JSON.stringify(store) === JSON.stringify(['maps', 'recordings']));
           const transaction = {
             mode,
             request: {},
-            objectStore() {
+            objectStore(name) {
+              if (name === 'recordings') return {
+                index(indexName) {
+                  assert.equal(indexName, 'mapId');
+                  return {
+                    openCursor(mapId) {
+                      assert.equal(typeof mapId, 'string');
+                      const cursorRequest = { result: null };
+                      queueMicrotask(() => cursorRequest.onsuccess?.());
+                      return cursorRequest;
+                    },
+                  };
+                },
+              };
               return {
                 put(map) { transaction.writtenMap = map; return transaction.request; },
                 getAll() { return transaction.request; },

@@ -1,6 +1,8 @@
 // This database deliberately does not share the video journal's recording store.
 const DATABASE_NAME = 'dream-unity-mind-maps';
 const STORE_NAME = 'maps';
+const RECORDINGS_STORE_NAME = 'recordings';
+const DATABASE_VERSION = 2;
 const MAX_NODES = 500;
 const MAX_IMPORT_LENGTH = 8_000_000;
 const MAX_COORDINATE = 10_000;
@@ -222,7 +224,7 @@ function getDatabase() {
       reject(error);
     };
     try {
-      request = globalThis.indexedDB.open(DATABASE_NAME, 1);
+      request = globalThis.indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
     } catch (error) {
       // Run after databasePromise is assigned, including for synchronous security errors.
       queueMicrotask(() => fail(error));
@@ -231,6 +233,11 @@ function getDatabase() {
     request.onupgradeneeded = () => {
       const database = request.result;
       if (!database.objectStoreNames.contains(STORE_NAME)) database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      if (!database.objectStoreNames.contains(RECORDINGS_STORE_NAME)) {
+        const recordings = database.createObjectStore(RECORDINGS_STORE_NAME, { keyPath: 'id' });
+        recordings.createIndex('mapId', 'mapId');
+        recordings.createIndex('idea', ['mapId', 'nodeId']);
+      }
     };
     request.onerror = () => fail(request.error || new Error('The mind-map database could not be opened.'));
     request.onblocked = () => fail(new Error('Mind-map storage is blocked by another tab. Close other tabs for this journal, then try again.'));
@@ -254,17 +261,17 @@ function getDatabase() {
   return opening;
 }
 
-async function transaction(mode, operation) {
+async function transaction(mode, operation, storeNames = STORE_NAME) {
   let database = await getDatabase();
   let pending;
   try {
-    pending = database.transaction(STORE_NAME, mode);
+    pending = database.transaction(storeNames, mode);
   } catch (error) {
     if (error.name !== 'InvalidStateError') throw error;
     // A versionchange can close a connection between awaiting it and starting a transaction.
     forgetDatabase(database);
     database = await getDatabase();
-    pending = database.transaction(STORE_NAME, mode);
+    pending = database.transaction(storeNames, mode);
   }
   return new Promise((resolve, reject) => {
     let result;
@@ -272,13 +279,23 @@ async function transaction(mode, operation) {
     pending.oncomplete = () => resolve(result);
     pending.onerror = (event) => { failure = pending.error || event.target.error || failure; };
     pending.onabort = () => reject(failure || pending.error || new Error('The mind-map storage transaction was cancelled.'));
-    try {
-      const request = operation(pending.objectStore(STORE_NAME));
-      request.onsuccess = () => { result = request.result; };
-      request.onerror = () => { failure = request.error; };
-    } catch (error) {
+    const fail = (error) => {
       failure = error;
       try { pending.abort(); } catch { reject(error); }
+    };
+    // Chained reads and writes stay inside one transaction and settle only on commit.
+    const watch = (request, success = (value) => { result = value; }) => {
+      request.onsuccess = () => {
+        try { success(request.result); } catch (error) { fail(error); }
+      };
+      request.onerror = () => { failure = request.error; };
+      return request;
+    };
+    try {
+      const request = operation(pending.objectStore(STORE_NAME), pending, watch, fail);
+      if (request) watch(request);
+    } catch (error) {
+      fail(error);
     }
   });
 }
@@ -292,11 +309,101 @@ export async function listMaps() {
 export async function saveMap(input) {
   const map = validateMap(input);
   map.updatedAt = new Date().toISOString();
-  await transaction('readwrite', (store) => store.put(map));
+  const nodeIds = new Set(map.nodes.map((node) => node.id));
+  await transaction('readwrite', (store, pending, watch) => {
+    const recordings = pending.objectStore(RECORDINGS_STORE_NAME);
+    watch(recordings.index('mapId').openCursor(map.id), (cursor) => {
+      if (!cursor) return;
+      if (!nodeIds.has(cursor.value.nodeId)) cursor.delete();
+      cursor.continue();
+    });
+    return store.put(map);
+  }, [STORE_NAME, RECORDINGS_STORE_NAME]);
   return map;
 }
 
 export async function deleteMap(id) {
   identifier(id, 'The mind-map ID');
-  await transaction('readwrite', (store) => store.delete(id));
+  await transaction('readwrite', (store, pending, watch) => {
+    watch(pending.objectStore(RECORDINGS_STORE_NAME).index('mapId').openCursor(id), (cursor) => {
+      if (!cursor) return;
+      cursor.delete();
+      cursor.continue();
+    });
+    return store.delete(id);
+  }, [STORE_NAME, RECORDINGS_STORE_NAME]);
+}
+
+function validateRecording(input) {
+  const source = object(input, 'The idea recording');
+  const id = identifier(source.id, 'The recording ID');
+  const mapId = identifier(source.mapId, 'The mind-map ID');
+  const nodeId = identifier(source.nodeId, 'The idea ID');
+  const createdAt = date(source.createdAt, 'The recording date');
+  const durationMs = source.durationMs;
+  if (typeof durationMs !== 'number' || !Number.isFinite(durationMs) || durationMs < 0 || durationMs > Number.MAX_SAFE_INTEGER) {
+    throw new Error('The recording duration must be a finite, non-negative number.');
+  }
+  const mimeType = source.mimeType;
+  if (typeof mimeType !== 'string' || mimeType.length > 160 || !/^video\/[a-z0-9.+-]+(?:;[a-z0-9="., _+-]+)*$/i.test(mimeType)) {
+    throw new Error('The recording must use a supported video format.');
+  }
+  if (!(source.blob instanceof Blob) || source.blob.size === 0) {
+    throw new Error('The recording is empty. Record a video before saving.');
+  }
+  return { id, mapId, nodeId, createdAt, durationMs, mimeType, blob: source.blob };
+}
+
+function hasIdea(map, nodeId) {
+  return map && Array.isArray(map.nodes) && map.nodes.some((node) => node.id === nodeId);
+}
+
+/** Camera videos live only in the mind-map database, never the shared journal library. */
+export async function saveIdeaRecording(input) {
+  const recording = validateRecording(input);
+  await transaction('readwrite', (maps, pending, watch) => {
+    watch(maps.get(recording.mapId), (map) => {
+      if (!hasIdea(map, recording.nodeId)) {
+        throw new DOMException('This idea no longer exists. The recording cannot be attached.', 'NotFoundError');
+      }
+      // add(), rather than put(), prevents an ID collision from replacing another idea's video.
+      watch(pending.objectStore(RECORDINGS_STORE_NAME).add(recording));
+    });
+  }, [STORE_NAME, RECORDINGS_STORE_NAME]);
+  return recording;
+}
+
+/** Read just the selected map/idea pair; identical node IDs in other maps stay separate. */
+export async function listIdeaRecordings(mapId, nodeId) {
+  identifier(mapId, 'The mind-map ID');
+  identifier(nodeId, 'The idea ID');
+  let recordings = [];
+  await transaction('readonly', (maps, pending, watch) => {
+    watch(maps.get(mapId), (map) => {
+      if (!hasIdea(map, nodeId)) return;
+      watch(pending.objectStore(RECORDINGS_STORE_NAME).index('idea').getAll([mapId, nodeId]), (stored) => {
+        recordings = stored.map(validateRecording);
+      });
+    });
+  }, [STORE_NAME, RECORDINGS_STORE_NAME]);
+  return recordings.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+/** Checking ownership and deleting happen atomically, so another idea cannot remove it. */
+export async function deleteIdeaRecording(mapId, nodeId, id) {
+  identifier(mapId, 'The mind-map ID');
+  identifier(nodeId, 'The idea ID');
+  identifier(id, 'The recording ID');
+  let removed = false;
+  await transaction('readwrite', (_maps, pending, watch) => {
+    const recordings = pending.objectStore(RECORDINGS_STORE_NAME);
+    watch(recordings.get(id), (recording) => {
+      if (!recording) return;
+      if (recording.mapId !== mapId || recording.nodeId !== nodeId) {
+        throw new DOMException('This recording does not belong to the selected idea.', 'SecurityError');
+      }
+      watch(recordings.delete(id), () => { removed = true; });
+    });
+  }, [STORE_NAME, RECORDINGS_STORE_NAME]);
+  return removed;
 }

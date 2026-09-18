@@ -20,7 +20,11 @@ Choose **New map**, name it, and select an idea to edit its text and notes. **Ad
 
 Paste or drag a YouTube video link into the video panel. Standard watch, Share, Shorts, Live and embed links are supported, including start timestamps. The video link is saved with its map. Playback needs internet access and connects to YouTube; unavailable or embed-restricted videos can be opened using **Open on YouTube**.
 
-Every idea can also have its own video. Select a branch and use **Video for this idea**, directly below its notes, to paste, drop or enter a YouTube link. **Has video** marks linked branches. Selecting one shows its video in the centred player at the top; **Watch video** takes you to that player. **Watch map video** returns to the map's main video. Regular (the default), Large and Very large sizes apply to both map and branch playback. Branch links are saved automatically and included in exported backups; older maps still load normally.
+Every idea can also have its own YouTube link. Select a branch and use **YouTube video for this idea**, below its recording controls, to paste, drop or enter a link. **Has video** marks linked branches. Selecting one shows its video in the centred player at the top; **Watch video** takes you to that player. **Watch map video** returns to the map's main video. Regular (the default), Large and Very large sizes apply to both map and branch YouTube playback. Branch links are saved automatically and included in exported backups; older maps still load normally.
+
+**Record video for this idea**, immediately beneath the selected idea's notes, records your camera and microphone. Enable the camera, start recording, then finish to save. Recordings are attached to the exact map and idea, and can be played, downloaded or deleted only from that idea's inspector. They never appear in the shared YouTube player or the general video journal. Switching ideas stops the camera, removes the previous idea's players, and saves any active recording to its original idea. Camera permission requests and delayed saves cannot transfer recordings to another idea.
+
+Idea recordings are stored locally in a separate store within the mind-map database. Map JSON exports contain text and YouTube links, **not recorded video files**; download recordings from their owning idea for separate video backups. Imported maps are independent copies and do not gain access to the original map's recordings. Deleting an idea (including descendant ideas) or a map also deletes its recordings. If saving fails, the recording remains available for retry or download in its original idea while the page stays open.
 
 Maps save automatically in IndexedDB in the same browser profile and device. They are **not cloud-synced**. Clearing site data or using a temporary/private browser session may remove them. Use **Export map** for a JSON backup and **Import backup** to restore or transfer a map. Import creates a separate copy, never overwriting an existing map. Storage failures are shown explicitly; save status changes to saved only after the database transaction commits.
 
@@ -28,12 +32,13 @@ Existing video recordings and reflections remain in the unchanged `dream-unity-v
 
 ## Development
 
-No build step or dependencies are required. Serve the repository over HTTP, for example `python3 -m http.server 8765`.
+No build step or runtime dependencies are required. Serve the repository over HTTP, for example `python3 -m http.server 8765`. The test suite uses a development-only IndexedDB implementation.
 
-Run parser, map validation, import/export and storage transaction tests with:
+Run parser, map validation, import/export, recording lifecycle and storage transaction tests with:
 
 ```sh
-node --test tests/*.mjs
+npm ci
+npm test
 ```
 
 YouTube embeds use privacy-enhanced URLs with a strict host allowlist, an explicit referrer policy, inline playback, and a fallback watch link. User-entered map text is rendered as text, never HTML.
