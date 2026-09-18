@@ -1,0 +1,5 @@
+node_modules/
+public/
+__pycache__/
+worker/__pycache__/
+.vercel/
