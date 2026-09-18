@@ -38,6 +38,26 @@ body {
   -webkit-mask-image: linear-gradient(to right, transparent, #000 2%, #000 98%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 2%, #000 98%, transparent);
 }
+.portal-title {
+  position: absolute;
+  /* Centre the heading in the quiet paper between the two outer guide arcs. */
+  left: 50%;
+  top: 6.060606%; /* 76 / 1254 */
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  width: max-content;
+  margin: 0;
+  padding-left: .48em;
+  color: #2b271f;
+  font-size: clamp(7px, calc(min(100vw, 100vh, 1254px) * .0125), 18px);
+  font-size: clamp(7px, calc(min(100vw, 100svh, 1254px) * .0125), 18px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: .48em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
 .portal {
   position: absolute;
   left: var(--x);
@@ -105,8 +125,6 @@ body {
     --available-width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
     --previous-size: min(var(--available-width), var(--available-height), 1254px);
     --expanded-size: min(var(--available-width), calc(var(--previous-size) * .5 + var(--available-height) * .5428571429));
-    --top-clearance: calc(var(--available-height) * .25 - var(--previous-size) * .2328548644);
-    --title-size: min(16px, calc(var(--expanded-size) * .012), calc(var(--top-clearance) * .7));
     position: relative;
     display: block;
     height: 100vh;
@@ -125,31 +143,8 @@ body {
     top: calc(env(safe-area-inset-top, 0px) + var(--available-height) * .5 + (var(--expanded-size) - var(--previous-size) * .5) * .0051834131);
     transform: translate(-50%, -50%);
   }
-  .portal-image {
-    /* Replace only the baked-in heading above the circle with a visible h1.
-       The vertical mask is fully opaque before the guide circle begins. */
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 2%, #000 98%, transparent), linear-gradient(to bottom, transparent 2.75%, #000 3.25%);
-    mask-image: linear-gradient(to right, transparent, #000 2%, #000 98%, transparent), linear-gradient(to bottom, transparent 2.75%, #000 3.25%);
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
-  }
   .portal-title {
-    clip: auto;
-    overflow: visible;
-    width: auto;
-    height: auto;
-    margin: 0;
-    padding-left: .5em;
-    left: calc(env(safe-area-inset-left, 0px) + var(--available-width) * .5);
-    top: calc(env(safe-area-inset-top, 0px) + (var(--top-clearance) - var(--title-size)) * .5);
-    transform: translateX(-50%);
-    z-index: 2;
-    font-size: var(--title-size);
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: .5em;
-    text-transform: uppercase;
-    pointer-events: none;
+    font-size: clamp(7px, calc(var(--expanded-size) * .0125), 18px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
