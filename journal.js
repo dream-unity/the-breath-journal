@@ -49,12 +49,10 @@
   document.querySelector(`[data-portal="${worldKey}"]`)?.setAttribute('aria-current', 'page');
   if (worldKey === 'maker') {
     document.querySelector('.eyebrow').textContent = '02 · WATCH, CONNECT, REFLECT';
-    const recordings = document.createElement('details');
-    recordings.className = 'local-recordings';
-    const summary = document.createElement('summary');
-    summary.textContent = 'Record or revisit your local videos';
-    recordings.append(summary, document.querySelector('.recorder-card'), document.querySelector('.entries-section'));
-    document.querySelector('.journal-shell').append(recordings);
+    document.querySelector('.recorder-card').remove();
+    document.querySelector('.entries-section').remove();
+    // Mind-map ideas use their own recorder and storage in mindmap.js.
+    return;
   }
 
   const DB_NAME = 'dream-unity-video-journal';

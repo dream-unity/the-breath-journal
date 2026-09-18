@@ -89,9 +89,6 @@ body[data-world="maker"] .world-heading>p:last-child{margin:10px 0 0;max-width:n
 .map-node-video [aria-invalid="true"]{border-color:#a52b42}
 .map-node-video [role="status"]:empty{display:none}
 .map-instructions{margin:0;padding:0 20px 16px;color:#5b6c63;font-size:13px;line-height:1.5}
-.local-recordings{margin-top:30px;border:1px solid var(--line);border-radius:15px;padding:18px;background:#ffffff90}
-.local-recordings summary{font-size:16px;font-weight:600;cursor:pointer;padding:4px}
-.local-recordings .recorder-card{margin-top:20px}.local-recordings .entries-section{margin-top:30px}
 @media(max-width:900px){.map-canvas-viewport{height:390px}}
 @media(max-width:520px){.map-video-heading{flex-wrap:wrap;justify-content:center;text-align:center}.map-video-panel form,.map-node-video form{grid-template-columns:1fr}.map-video-placeholder{padding:16px}}
 @media(max-width:520px){body[data-world="maker"] .journal-shell{width:calc(100% - 20px);padding-top:24px}.portal-nav{gap:6px}.portal-nav a{font-size:13px;padding:9px}.map-library,.map-title-row,.map-video-panel{padding:14px}.map-library-field{max-width:none;flex-basis:100%}.map-library button{flex:1}.map-inspector{grid-template-columns:1fr;padding:14px}.map-title-field{flex-basis:100%}.map-tools button{padding:9px;font-size:13px}.map-workspace{border-radius:14px}.map-storage-note{padding:10px 14px}.map-save-status{max-width:100%}}

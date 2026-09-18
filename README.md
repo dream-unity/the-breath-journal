@@ -30,7 +30,7 @@ Idea recordings are stored locally in a separate store within the mind-map datab
 
 Maps save automatically in IndexedDB in the same browser profile and device. They are **not cloud-synced**. Clearing site data or using a temporary/private browser session may remove them. Use **Export map** for a JSON backup and **Import backup** to restore or transfer a map. Import creates a separate copy, never overwriting an existing map. Storage failures are shown explicitly; save status changes to saved only after the database transaction commits.
 
-Existing video recordings and reflections remain in the unchanged `dream-unity-video-journal` database, with their original `machine`, `maker` and `reality` identifiers. The maker portal's local recordings are accessible in **Record or revisit your local videos**. Mind maps use the separate `dream-unity-mind-maps` database.
+Existing video recordings and reflections remain in the unchanged `dream-unity-video-journal` database, with their original `machine`, `maker` and `reality` identifiers. Mind-Mapping Videos uses only the recorder attached to each idea; its former general recording section is no longer displayed, and existing stored data is retained. Mind maps use the separate `dream-unity-mind-maps` database.
 
 ## Development
 
