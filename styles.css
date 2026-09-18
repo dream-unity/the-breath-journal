@@ -8,17 +8,23 @@
 html, body { margin: 0; min-width: 280px; min-height: 100%; }
 body { background: #e9e1d3; }
 .portal-page {
-  display: grid;
-  place-items: center;
-  min-height: 100vh;
-  min-height: 100svh;
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  /* Extend the artwork's quiet parchment corner across unusual screen shapes. */
+  background: #e9e1d3 url("./assets/dream-unity-portals.webp") left top / 600vmax 600vmax no-repeat;
 }
 .portal-artwork {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   isolation: isolate;
-  width: min(100%, 100vh, 1254px);
-  width: min(100%, calc(100svh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)), 1254px);
+  /* Cover the viewport uniformly. The limits keep every portal fully visible
+     on tall phones and ultrawide displays; decorative outer arcs may crop. */
+  width: min(max(100vw, 100vh), 144vw, 275vh);
+  width: min(max(100vw, 100dvh), 144vw, 275dvh);
   aspect-ratio: 1;
 }
 .portal-image {
@@ -28,6 +34,19 @@ body { background: #e9e1d3; }
   aspect-ratio: 1;
   user-select: none;
   pointer-events: none;
+}
+/* Blend into the same paper only when the portal-preserving size limit applies. */
+@media (max-aspect-ratio: 25/36) {
+  .portal-image {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 4%, #000 12%, #000 88%, transparent 96%);
+    mask-image: linear-gradient(to bottom, transparent 4%, #000 12%, #000 88%, transparent 96%);
+  }
+}
+@media (min-aspect-ratio: 11/4) {
+  .portal-image {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
 }
 .portal {
   position: absolute;
