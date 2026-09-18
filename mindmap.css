@@ -47,27 +47,6 @@ body[data-world="maker"] .world-heading>p:last-child{margin:10px 0 0;max-width:n
 .map-video-placeholder{color:#52675c;padding:30px;text-align:center;line-height:1.6;font-size:15px}
 .map-video-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;max-width:800px;margin:12px auto}
 .map-video-actions a{color:#007e4d;font-size:14px}
-.yt-download{width:min(100%,var(--video-width),128vh);width:min(100%,var(--video-width),128svh);margin:0 auto 18px;padding:14px 16px;border:1px solid #d3e3d9;border-radius:10px;background:#f5faf7;text-align:left}
-.yt-download-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px}
-.map-workspace .yt-download-button{background:#fff;border-color:#bcd4c6;font-weight:600;flex:1 1 160px}
-.map-workspace .yt-download-button:hover{background:#e7f4ed;border-color:#8bb89e}
-.yt-download-status{font-size:13px;line-height:1.55;color:#355c45;margin:12px 0 0;overflow-wrap:anywhere}
-.yt-download-status:empty{display:none}
-.yt-download-hint{font-size:12px;line-height:1.6;color:#62796b;margin:10px 0 0}
-.yt-download-setup{margin-top:12px;border-top:1px solid #dce8e1;padding-top:8px;font-size:13px;line-height:1.6;color:#53695c}
-.yt-download-setup summary{cursor:pointer;color:#365c45;font-weight:600;padding:4px 0}
-.yt-download-setup p{margin:9px 0}
-.yt-download-setup-links{display:flex;flex-wrap:wrap;gap:8px 18px;margin:10px 0}
-.yt-download a{color:#007e4d;text-underline-offset:3px}
-.map-workspace .yt-download-connect{display:flex;flex-wrap:wrap;align-items:end;gap:8px;max-width:none;margin-top:12px}
-.map-workspace .yt-download-connect label{flex:1 1 200px;font-size:13px;margin:0}
-.map-workspace .yt-download-code{display:block;margin-top:6px;font:14px ui-monospace,monospace}
-.yt-download-results{display:grid;gap:8px;margin-top:12px}
-.yt-download-results:empty{display:none}
-.yt-download-result{padding:12px;border:1px solid #cee0d5;border-radius:8px;background:#fff;font-size:13px;overflow-wrap:anywhere}
-.yt-download-result p{margin:0 0 8px;line-height:1.5}
-.yt-download-result button{margin:4px 8px 0 0}
-@media(max-width:520px){.yt-download{padding:12px}.yt-download-actions{gap:8px}.yt-download-actions button{flex:1 1 120px}.yt-download-connect button{flex:1}}
 .map-editor-panel{min-width:0}
 .map-tools{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:12px;border-bottom:1px solid var(--line)}
 .map-tools .map-zoom-label{font-size:13px;color:#53665d;min-width:42px;text-align:center}
