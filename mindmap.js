@@ -1,6 +1,7 @@
 import { createMap, listMaps, saveMap, deleteMap, parseYouTubeUrl, serializeMap, importMap } from './mindmap-core.js?v=20260918-independent-players-5';
 import { createIdeaRecorder } from './idea-recorder.js?v=20260918-independent-players-5';
 import { createYouTubePlayer } from './youtube-player.js?v=20260918-independent-players-5';
+import { createMapLibrary, nextMapTitle } from './mindmap-library.js?v=20260919-saved-library-1';
 
 if (new URLSearchParams(location.search).get('world') === 'maker') initMindMaps();
 
@@ -24,6 +25,13 @@ function initMindMaps() {
       if (!matches()) throw new Error('The selected idea changed before the camera was ready.');
     },
   });
+  const library = createMapLibrary($('mapLibrary'), {
+    onOpen: id => withSavedMap(() => {
+      const map = maps.find(map => map.id === id);
+      if (!map) throw new Error('This map is no longer in the library. Reload the page to refresh your saved maps.');
+      openMap(map);
+    }),
+  });
   el.mindMapWorkspace.hidden = false;
   // Presentation only: always start at Regular, without changing saved map data.
   for (const [select, panel] of [[el.videoSize, el.videoDropZone], [el.nodeVideoSize, el.nodeVideoPanel]]) {
@@ -38,10 +46,7 @@ function initMindMaps() {
   }
 
   function refreshLibrary() {
-    el.savedMaps.replaceChildren();
-    if (!maps.length) el.savedMaps.add(new Option('No saved maps yet', ''));
-    for (const map of [...maps].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))) el.savedMaps.add(new Option(map.title || 'Untitled mind map', map.id));
-    el.savedMaps.value = current?.id || '';
+    library.update(maps, current?.id || null);
   }
 
   function changed() {
@@ -81,10 +86,11 @@ function initMindMaps() {
     // Prevent edits during navigation while the current map is being committed.
     el.mapEditor.inert = true;
     el.videoDropZone.inert = true;
-    el.newMap.disabled = el.importMap.disabled = el.savedMaps.disabled = true;
+    el.newMap.disabled = el.importMap.disabled = true;
+    library.setBusy(true);
     try { if (saveFirst) await persist(); else { clearTimeout(saveTimer); await queue.catch(() => {}); } await action(); message(''); }
     catch (error) { report(error); refreshLibrary(); renderInspector(); }
-    finally { busy = false; el.mapEditor.inert = el.videoDropZone.inert = false; el.newMap.disabled = el.importMap.disabled = el.savedMaps.disabled = false; }
+    finally { busy = false; el.mapEditor.inert = el.videoDropZone.inert = false; el.newMap.disabled = el.importMap.disabled = false; library.setBusy(false); }
   }
 
   function openMap(map) {
@@ -99,6 +105,7 @@ function initMindMaps() {
     el.mapEmpty.hidden = !!current;
     el.mapEditor.hidden = !current;
     el.videoDropZone.hidden = !current;
+    library.clearSearch();
     refreshLibrary();
     if (!current) return;
     el.mapTitle.value = current.title;
@@ -332,8 +339,7 @@ function initMindMaps() {
     } catch (error) { el.youtubeUrl.setAttribute('aria-invalid','true'); el.youtubeStatus.textContent=error.message; }
   }
 
-  el.newMap.addEventListener('click', () => withSavedMap(async () => { const map=createMap(); await saveMap(map); maps.push(map); openMap(map); requestAnimationFrame(()=>{el.mapTitle.focus(); el.mapTitle.select();}); }));
-  el.savedMaps.addEventListener('change', () => { const id=el.savedMaps.value; withSavedMap(() => openMap(maps.find(map => map.id===id))); });
+  el.newMap.addEventListener('click', () => withSavedMap(async () => { const map=await saveMap(createMap(nextMapTitle(maps))); maps=await listMaps(); openMap(map); requestAnimationFrame(()=>{el.mapTitle.focus(); el.mapTitle.select();}); }));
   el.mapTitle.addEventListener('input', () => { current.title=el.mapTitle.value; changed(); });
   el.saveMap.addEventListener('click', () => persist().then(()=>message('')).catch(report));
   el.nodeLabel.addEventListener('input', () => { const node=selected(); node.label=el.nodeLabel.value; const button=[...el.mapNodes.children].find(item=>item.dataset.id===node.id); nodeText(button,node); ideaRecorder.setIdea({mapId:current.id,nodeId:node.id,label:node.label || 'Untitled idea'}); renderNodePlayer(); changed(); });
@@ -378,12 +384,13 @@ function initMindMaps() {
   el.mapFile.addEventListener('change',()=>withSavedMap(async()=>{
     const file=el.mapFile.files[0];el.mapFile.value='';if(!file)return;
     if(file.size>8*1024*1024)throw new Error('This file is too large. Choose a mind-map JSON backup under 8 MB.');
-    const map=importMap(await file.text());await saveMap(map);maps.push(map);openMap(map);
+    const map=await saveMap(importMap(await file.text()));maps=await listMaps();openMap(map);
   }));
   // Backgrounding saves text only. Do not pause, hide, remount or reload media here.
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')persist().catch(report);});
   window.addEventListener('pageshow',event=>{if(event.persisted)renderInspector();});
   window.addEventListener('beforeunload',event=>{if((current&&revision!==savedRevision)||ideaRecorder.hasUnfinished()){persist().catch(()=>{});event.preventDefault();event.returnValue='';}});
-  el.newMap.disabled = el.importMap.disabled = el.savedMaps.disabled = true;
-  listMaps().then(saved=>{maps=saved;openMap(maps[0]||null);}).catch(error=>{report(error);refreshLibrary();}).finally(()=>{el.newMap.disabled = el.importMap.disabled = el.savedMaps.disabled = false;});
+  el.newMap.disabled = el.importMap.disabled = true;
+  library.setBusy(true);
+  listMaps().then(saved=>{maps=saved;openMap(maps[0]||null);}).catch(error=>{report(error);library.setError();}).finally(()=>{el.newMap.disabled = el.importMap.disabled = false;library.setBusy(false);});
 }

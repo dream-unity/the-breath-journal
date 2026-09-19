@@ -16,6 +16,8 @@ The landing page needs no JavaScript, preserves normal browser zoom, and support
 
 ## Mind-Mapping Videos
 
+The **Your saved mind maps** library appears above the video player. Every saved map has a clickable card with its title, idea count and last saved date; the current map is marked **Currently open**. Search by title or use **Saved mind maps** beside the editor to return to the library. Click **Open map** on an earlier map to resume it. **New map** saves current changes first and creates a separate map with a distinct starting title; earlier maps remain in the library after creating a new map or reloading the page.
+
 Choose **New map**, name it, and select an idea to edit its text and notes. **Add branch** connects a new idea to the selected idea; **Add sibling** connects it to the same parent. Drag ideas, use Alt + arrow keys, or choose **Arrange**. The **Connect to** field moves an idea's branch under another idea while preventing cycles. Zoom and **Fit map** help navigate larger maps.
 
 Paste or drag a YouTube video link into the video panel. Standard watch, Share, Shorts, Live and embed links are supported, including start timestamps. The video link is saved with its map. Playback needs internet access and connects to YouTube; unavailable or embed-restricted videos can be opened using **Open on YouTube**.

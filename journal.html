@@ -7,7 +7,7 @@
   <meta name="description" content="A private, device-local Dream Unity video journal." />
   <title>Video Journal · Dream Unity</title>
   <link rel="stylesheet" href="./journal.css?v=20260918-mind-maps-1" />
-  <link rel="stylesheet" href="./mindmap.css?v=20260919-idea-recorder-only-1" />
+  <link rel="stylesheet" href="./mindmap.css?v=20260919-saved-library-1" />
 </head>
 <body data-world="machine">
   <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -35,6 +35,22 @@
     </section>
 
     <section id="mindMapWorkspace" class="map-workspace" aria-label="Mind maps" hidden>
+      <section id="mapLibrary" class="map-library" aria-labelledby="mapLibraryHeading">
+        <div class="map-library-heading">
+          <div><h2 id="mapLibraryHeading">Your saved mind maps</h2><p>Click any map below to reopen it. Starting a new map keeps your earlier maps here.</p></div>
+          <span class="map-library-count" data-map-count role="status">Loading…</span>
+        </div>
+        <div class="map-library-toolbar">
+          <div class="map-library-search"><label for="mapSearch">Find a saved map</label><input id="mapSearch" data-map-search type="search" placeholder="Search map titles…" autocomplete="off" aria-controls="savedMaps" /><button data-map-clear type="button" hidden>Clear search</button></div>
+          <div class="map-library-actions"><button id="newMap" class="map-primary" type="button">New map</button><button id="importMap" type="button">Import backup</button></div>
+          <input id="mapFile" type="file" accept=".json,application/json" hidden />
+        </div>
+        <p class="map-library-results" data-map-results role="status"></p>
+        <ul id="savedMaps" class="map-library-list" data-map-list aria-label="Saved mind maps"></ul>
+        <p class="map-library-empty" data-map-empty>Loading your saved mind maps…</p>
+      </section>
+      <p class="map-storage-note">Maps save automatically in this browser on this device. Export backups to keep a copy or move them to another device.</p>
+      <p id="mapMessage" class="map-message" role="alert" hidden></p>
       <section id="videoDropZone" class="map-video-panel" data-video-size="regular" aria-label="Mind map video player" hidden>
         <div class="map-video-heading">
           <h3>Watch &amp; connect</h3>
@@ -59,17 +75,10 @@
         <p id="youtubeStatus" class="map-help" role="status" aria-live="polite"></p>
         <p class="map-help">YouTube playback needs an internet connection and connects to YouTube. If a video cannot play here, open it on YouTube.</p>
       </section>
-      <div class="map-library">
-        <div class="map-library-field"><label for="savedMaps">Your saved mind maps</label><select id="savedMaps"><option value="">Loading maps…</option></select></div>
-        <button id="newMap" class="map-primary" type="button">New map</button>
-        <button id="importMap" type="button">Import backup</button>
-        <input id="mapFile" type="file" accept=".json,application/json" hidden />
-      </div>
-      <p class="map-storage-note">Maps save automatically in this browser on this device. Export backups to keep a copy or move them to another device.</p>
-      <p id="mapMessage" class="map-message" role="alert" hidden></p>
       <div id="mapEmpty" class="map-empty"><h2>Make room for connections.</h2><p>Create a mind map, add a YouTube link, and connect the ideas as you watch.</p></div>
       <div id="mapEditor" hidden>
         <div class="map-title-row">
+          <a class="map-library-link" href="#mapLibrary">← Saved mind maps</a>
           <div class="map-title-field"><label for="mapTitle">Map title</label><input id="mapTitle" maxlength="160" autocomplete="off" /></div>
           <span id="mapSaveStatus" class="map-save-status" role="status" aria-live="polite"></span>
           <button id="saveMap" type="button">Save now</button>
@@ -217,6 +226,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script src="./journal.js?v=20260919-idea-recorder-only-1"></script>
-  <script type="module" src="./mindmap.js?v=20260918-independent-players-5"></script>
+  <script type="module" src="./mindmap.js?v=20260919-saved-library-1"></script>
 </body>
 </html>

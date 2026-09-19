@@ -19,9 +19,27 @@ body[data-world="maker"] .world-heading>p:last-child{margin:10px 0 0;max-width:n
 .map-workspace :is(input,textarea){font-size:16px}
 .map-workspace label{display:block;font-size:14px;font-weight:650;color:#354f44;margin-bottom:7px}
 .map-workspace :focus-visible,.portal-nav a:focus-visible{outline:3px solid #00a868;outline-offset:3px}
-.map-library{display:flex;align-items:end;gap:10px;flex-wrap:wrap;padding:20px;border-bottom:1px solid var(--line);background:#f6faf8}
-.map-library-field{flex:1;min-width:180px;max-width:400px}
-.map-library select{background:#fff}
+.map-library{padding:22px;border-bottom:1px solid var(--line);background:#f6faf8;scroll-margin-top:20px}
+.map-library-heading{display:flex;align-items:start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.map-library-heading h2{margin:0;color:#234932;font:400 28px Georgia,serif}
+.map-library-heading p{margin:7px 0 0;color:#53665d;font-size:14px;line-height:1.5}
+.map-library-count{flex-shrink:0;border:1px solid #c7dece;border-radius:20px;background:#e6f4eb;color:#24533a;padding:6px 11px;font-size:13px;font-weight:650}
+.map-library-toolbar{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin-top:18px}
+.map-library-search{flex:1;min-width:200px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
+.map-library-search label{grid-column:1/-1;margin:0}
+.map-library-actions{display:flex;gap:8px;flex-wrap:wrap}
+.map-library-results{font-size:13px;color:#53665d;margin:12px 0 0}
+.map-library-results:empty{display:none}
+.map-library-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(245px,100%),1fr));gap:10px;list-style:none;padding:4px;margin:14px -4px -4px;max-height:284px;overflow-y:auto}
+.map-library-list:empty{display:none}
+.map-library-list li{min-width:0}
+.map-workspace .map-library-card{display:flex;flex-direction:column;align-items:start;gap:8px;width:100%;height:100%;min-height:110px;padding:14px 16px;text-align:left;border-color:#c7d9cd;background:#fff}
+.map-workspace .map-library-card[aria-current="true"]{border-color:#008753;background:#e8f6ee;box-shadow:inset 3px 0 #008753}
+.map-library-title{font-size:16px;line-height:1.35;overflow-wrap:anywhere}
+.map-library-meta{font-size:12px;line-height:1.5;color:#5d7366}
+.map-library-open{font-size:13px;font-weight:650;color:#007e4d;margin-top:auto}
+.map-library-empty{color:#53665d;font-size:14px;line-height:1.5;margin:16px 0 0}
+.map-library-link{align-self:center;color:#007e4d;font-size:14px;font-weight:600;text-underline-offset:3px;padding:10px 0;white-space:nowrap}
 .map-storage-note{margin:0;padding:10px 20px;font-size:13px;line-height:1.5;color:#53665d;border-bottom:1px solid var(--line)}
 .map-message{margin:0;padding:12px 20px;color:#9c2035;background:#fff1f3;font-size:14px;line-height:1.5}
 .map-empty{padding:45px 24px;text-align:center;color:#53665d}
@@ -91,4 +109,4 @@ body[data-world="maker"] .world-heading>p:last-child{margin:10px 0 0;max-width:n
 .map-instructions{margin:0;padding:0 20px 16px;color:#5b6c63;font-size:13px;line-height:1.5}
 @media(max-width:900px){.map-canvas-viewport{height:390px}}
 @media(max-width:520px){.map-video-heading{flex-wrap:wrap;justify-content:center;text-align:center}.map-video-panel form,.map-node-video form{grid-template-columns:1fr}.map-video-placeholder{padding:16px}}
-@media(max-width:520px){body[data-world="maker"] .journal-shell{width:calc(100% - 20px);padding-top:24px}.portal-nav{gap:6px}.portal-nav a{font-size:13px;padding:9px}.map-library,.map-title-row,.map-video-panel{padding:14px}.map-library-field{max-width:none;flex-basis:100%}.map-library button{flex:1}.map-inspector{grid-template-columns:1fr;padding:14px}.map-title-field{flex-basis:100%}.map-tools button{padding:9px;font-size:13px}.map-workspace{border-radius:14px}.map-storage-note{padding:10px 14px}.map-save-status{max-width:100%}}
+@media(max-width:520px){body[data-world="maker"] .journal-shell{width:calc(100% - 20px);padding-top:24px}.portal-nav{gap:6px}.portal-nav a{font-size:13px;padding:9px}.map-library,.map-title-row,.map-video-panel{padding:14px}.map-library-heading h2{font-size:25px}.map-library-search,.map-library-actions{flex-basis:100%}.map-library-actions button{flex:1}.map-library-list{max-height:270px}.map-library-link{flex-basis:100%}.map-inspector{grid-template-columns:1fr;padding:14px}.map-title-field{flex-basis:100%}.map-tools button{padding:9px;font-size:13px}.map-workspace{border-radius:14px}.map-storage-note{padding:10px 14px}.map-save-status{max-width:100%}}
